@@ -60,7 +60,7 @@ def robot_description_dependent_nodes_spawner(
                                            }).toprettyxml(indent='  ')
 
     franka_controllers = PathJoinSubstitution(
-        [FindPackageShare('franka_bringup'), 'config', 'controllers.yaml'])
+        [FindPackageShare('idra_franka_launch'), 'config', 'controllers.yaml'])
 
     return [
         Node(
@@ -123,7 +123,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             robot_ip_parameter_name,
             description='Hostname or IP address of the robot.',
-            default_value="192.160.100.2",),
+            default_value="192.160.100.12",),
         DeclareLaunchArgument(
             arm_id_parameter_name,
             description='ID of the type of arm used. Supported values: fer, fr3, fp3',
