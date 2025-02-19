@@ -1,0 +1,166 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="idra_bimanual_setup">
+
+  <xacro:include filename="$(find franka_description)/robots/common/franka_robot.xacro"/>
+
+
+  <!--  _____     _     _       -->
+  <!-- |_   _|_ _| |__ | | ___  -->
+  <!--   | |/ _` | '_ \| |/ _ \ -->
+  <!--   | | (_| | |_) | |  __/ -->
+  <!--   |_|\__,_|_.__/|_|\___| -->
+  <!--                          -->
+
+  <material name="tablematerial">
+    <color rgba="0.8 0.8 0.8 1.0"/>
+  </material>
+  <material name="platematerial">
+    <color rgba="0.85 0.85 0.85 1.0"/>
+  </material>
+
+  <link name="table">
+    <visual>
+      <geometry>
+        <box size="1.2 0.8 0.2"/>
+      </geometry>
+      <origin xyz="0.6 0.4 -0.1"/>
+      <material name="tablematerial"/>
+    </visual>
+  </link>
+
+  <link name="robot1_plate">
+    <visual>
+      <geometry>
+        <box size="0.29 0.29 0.018"/>
+      </geometry>
+      <origin xyz="0.145 0.145 0.009"/>
+      <material name="platematerial"/>
+    </visual>
+  </link>
+
+  <joint name="table_to_plate1" type="fixed">
+    <parent link="table"/>
+    <child link="robot1_plate"/>
+    <origin xyz="0.88 0.48 0.0"/>
+  </joint>
+
+  <link name="robot2_plate">
+    <visual>
+      <geometry>
+        <box size="0.29 0.29 0.018"/>
+      </geometry>
+      <origin xyz="0.145 0.145 0.009"/>
+      <material name="platematerial"/>
+    </visual>
+  </link>
+
+  <joint name="table_to_plate2" type="fixed">
+    <parent link="table"/>
+    <child link="robot2_plate"/>
+    <origin xyz="0.03 0.48 0.0"/>
+  </joint>
+
+
+
+  <!--  _____                _           ____                                -->
+  <!-- |  ___| __ __ _ _ __ | | ____ _  |  _ \ __ _ _ __ __ _ _ __ ___  ___  -->
+  <!-- | |_ | '__/ _` | '_ \| |/ / _` | | |_) / _` | '__/ _` | '_ ` _ \/ __| -->
+  <!-- |  _|| | | (_| | | | |   < (_| | |  __/ (_| | | | (_| | | | | | \__ \ -->
+  <!-- |_|  |_|  \__,_|_| |_|_|\_\__,_| |_|   \__,_|_|  \__,_|_| |_| |_|___/ -->
+  <!--                                                                       -->
+
+  <!-- Should an end-effector be mounted at the flange?" -->
+  <xacro:arg name="hand" default="true" />
+
+  <!-- Which end-effector would be mounted at the flange?" -->
+  <xacro:arg name="ee_id" default="franka_hand" />
+
+  <!-- Should self-collision be enabled? -->
+  <xacro:arg name="with_sc" default="false" />
+
+  <!-- Is the robot being controlled with ros2_control?" -->
+  <xacro:arg name="ros2_control" default="false" />
+
+  <!-- Should a fake hardware be used? -->
+  <xacro:arg name="use_fake_hardware" default="false" />
+
+  <!-- Should fake sensors be used? -->
+  <xacro:arg name="fake_sensor_commands" default="false" />
+
+  <!-- Should the robot be spawned in Gazebo?" -->
+  <xacro:arg name="gazebo" default="false" />
+
+  <!-- Should the robot be spawned in Gazebo with effort interfaces?" -->
+  <xacro:arg name="gazebo_effort" default="false" />
+
+  <xacro:arg name="multi_arm" default="true" />
+
+
+  <!--  _____                _         _  -->
+  <!-- |  ___| __ __ _ _ __ | | ____ _/ | -->
+  <!-- | |_ | '__/ _` | '_ \| |/ / _` | | -->
+  <!-- |  _|| | | (_| | | | |   < (_| | | -->
+  <!-- |_|  |_|  \__,_|_| |_|_|\_\__,_|_| -->
+  <!--                                    -->
+  <xacro:franka_robot arm_id="fr3"
+                      joint_limits="${xacro.load_yaml('$(find franka_description)/robots/fr3/joint_limits.yaml')}"
+                      inertials="${xacro.load_yaml('$(find franka_description)/robots/fr3/inertials.yaml')}"
+                      kinematics="${xacro.load_yaml('$(find franka_description)/robots/fr3/kinematics.yaml')}"
+                      dynamics="${xacro.load_yaml('$(find franka_description)/robots/fr3/dynamics.yaml')}"
+                      gazebo="$(arg gazebo)"
+                      hand="$(arg hand)"
+                      ee_id="$(arg ee_id)"
+                      with_sc="$(arg with_sc)"
+                      ros2_control="$(arg ros2_control)"
+                      robot_ip="192.160.100.11"
+                      arm_prefix="franka1"
+                      connected_to="franka1_base"
+                      multi_arm="true"
+                      no_prefix="false"
+                      use_fake_hardware="$(arg use_fake_hardware)"
+                      fake_sensor_commands="$(arg fake_sensor_commands)"
+                      gazebo_effort="$(arg gazebo_effort)">
+  </xacro:franka_robot>
+
+  <!-- Dimensions taken from technical drawing of Franka plate and custom designed plate, do not touch -->
+  <joint name="plate_to_franka1" type="fixed">
+    <parent link="robot1_plate"/>
+    <child link="franka1_base"/>
+    <origin xyz="0.145 0.107 0.018" rpy="0 0 ${-pi/2}"/>
+  </joint>
+
+
+  <!--  _____                _         ____   -->
+  <!-- |  ___| __ __ _ _ __ | | ____ _|___ \  -->
+  <!-- | |_ | '__/ _` | '_ \| |/ / _` | __) | -->
+  <!-- |  _|| | | (_| | | | |   < (_| |/ __/  -->
+  <!-- |_|  |_|  \__,_|_| |_|_|\_\__,_|_____| -->
+  <!--                                        -->
+  <xacro:franka_robot arm_id="fr3"
+                      joint_limits="${xacro.load_yaml('$(find franka_description)/robots/fr3/joint_limits.yaml')}"
+                      inertials="${xacro.load_yaml('$(find franka_description)/robots/fr3/inertials.yaml')}"
+                      kinematics="${xacro.load_yaml('$(find franka_description)/robots/fr3/kinematics.yaml')}"
+                      dynamics="${xacro.load_yaml('$(find franka_description)/robots/fr3/dynamics.yaml')}"
+                      gazebo="$(arg gazebo)"
+                      hand="$(arg hand)"
+                      ee_id="$(arg ee_id)"
+                      with_sc="$(arg with_sc)"
+                      ros2_control="$(arg ros2_control)"
+                      robot_ip="192.160.100.12"
+                      arm_prefix="franka2"
+                      connected_to="franka2_base"
+                      multi_arm="true"
+                      no_prefix="false"
+                      use_fake_hardware="$(arg use_fake_hardware)"
+                      fake_sensor_commands="$(arg fake_sensor_commands)"
+                      gazebo_effort="$(arg gazebo_effort)">
+  </xacro:franka_robot>
+
+  <!-- Dimensions taken from technical drawing of Franka plate and custom designed plate, do not touch -->
+  <joint name="plate_to_franka2" type="fixed">
+    <parent link="robot2_plate"/>
+    <child link="franka2_base"/>
+    <origin xyz="0.145 0.107 0.018" rpy="0 0 ${-pi/2}"/>
+  </joint>
+
+</robot>
