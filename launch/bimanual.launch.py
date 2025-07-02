@@ -69,6 +69,12 @@ def robot_description_dependent_nodes_spawner(
         '', 1
     )
 
+    robot_description = robot_description.replace(
+        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>/home/moska002/ros2_ws/install/franka_gazebo_bringup/share/franka_gazebo_bringup/config/franka_gazebo_controllers.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
+        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>/home/moska002/ros2_ws/install/idra_franka_launch/share/idra_franka_launch/config/basic_controllers.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
+        1
+    )
+
     print(robot_description)
 
     return [
@@ -80,26 +86,12 @@ def robot_description_dependent_nodes_spawner(
             parameters=[{'robot_description': robot_description}],
         ),
 
-        # Node(
-        #     package='controller_manager',
-        #     executable='ros2_control_node',
-        #     parameters=[
-        #         ParameterFile(franka_controllers, allow_substs=True),
-        #         {'robot_description': robot_description},
-        #         {'arm_id': arm_id},
-        #         {'load_gripper': load_gripper},
-        #         {'arm_prefix': arm_prefix},
-        #     ],
-        #     remappings = [
-        #         ('joint_states', 'franka/joint_states'),
-        #         ('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
-        #     ],
-        #     output={
-        #         'stdout': 'screen',
-        #         'stderr': 'screen',
-        #     },
-        #     on_exit=Shutdown(),
-        # ),
+        #Node(
+        #    package='controller_manager',
+        #    executable='ros2_control_node',
+        #    parameters=[franka_controllers],
+        #    output='screen'
+        #)
     ]
 
 
@@ -153,9 +145,15 @@ def generate_launch_description():
         output='screen'
     )
 
-    joint_velocity_example_controller = ExecuteProcess(
+    controller_left = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-                'joint_position_example_controller'],
+                'joint_position_controller_left'],
+        output='screen'
+    )
+
+    controller_right = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+                'joint_position_controller_right'],
         output='screen'
     )
 
@@ -253,12 +251,20 @@ def generate_launch_description():
                 on_exit=[load_joint_state_broadcaster],
             )
         ),
-        # RegisterEventHandler(
-        #     event_handler=OnProcessExit(
-        #         target_action=load_joint_state_broadcaster,
-        #         on_exit=[joint_velocity_example_controller],
-        #     )
-        # ),
+
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_state_broadcaster,
+                on_exit=[controller_left],
+            )
+        ),
+
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_state_broadcaster,
+                on_exit=[controller_right],
+            )
+        ),
 
         Node(
             package='joint_state_publisher',
