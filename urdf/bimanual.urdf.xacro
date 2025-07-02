@@ -177,4 +177,12 @@
     <origin xyz="0.145 0.107 0.018" rpy="0 0 ${-pi/2}"/>
   </joint>
 
+  <xacro:if value="$(arg gazebo)">
+  <gazebo>
+    <plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+      <parameters>$(find idra_franka_launch)/config/basic_controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+  </xacro:if>
+
 </robot>

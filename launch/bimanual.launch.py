@@ -1,4 +1,5 @@
 import os
+import re
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchContext, LaunchDescription
@@ -69,18 +70,13 @@ def robot_description_dependent_nodes_spawner(
             1
         )
     
-    robot_description = robot_description.replace(
-        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>/home/moska002/ros2_ws/install/franka_gazebo_bringup/share/franka_gazebo_bringup/config/franka_gazebo_controllers.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
-        '', 1
+    robot_description = re.sub(
+        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>[\w\/]+\/franka_gazebo_controllers\.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
+        '',
+        robot_description
     )
 
-    robot_description = robot_description.replace(
-        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>/home/moska002/ros2_ws/install/franka_gazebo_bringup/share/franka_gazebo_bringup/config/franka_gazebo_controllers.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
-        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>/home/moska002/ros2_ws/install/idra_franka_launch/share/idra_franka_launch/config/basic_controllers.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
-        1
-    )
-
-    # print(robot_description)
+    print(robot_description)
 
     return [
         Node(
@@ -113,12 +109,12 @@ def robot_description_dependent_nodes_spawner(
         #     on_exit=Shutdown(),
         # ),
 
-        # Node(
-        #     package="controller_manager",
-        #     executable="ros2_control_node",
-        #     parameters=[robot_description, franka_controllers],
-        #     output="screen"
-        # )
+        Node(
+            package="controller_manager",
+            executable="ros2_control_node",
+            parameters=[franka_controllers],
+            output="screen"
+        )
     ]
 
 
