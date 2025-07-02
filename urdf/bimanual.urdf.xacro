@@ -3,6 +3,12 @@
 
   <xacro:include filename="$(find franka_description)/robots/common/franka_robot.xacro"/>
 
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.2"/>
+    <parent link="world"/>
+    <child link="table"/>
+  </joint>
 
   <!--  _____     _     _       -->
   <!-- |_   _|_ _| |__ | | ___  -->
@@ -26,6 +32,12 @@
       <origin xyz="0.6 0.4 -0.1"/>
       <material name="tablematerial"/>
     </visual>
+    <collision>
+      <geometry>
+        <box size="1.2 0.8 0.2"/>
+      </geometry>
+      <origin xyz="0.6 0.4 -0.1"/>
+    </collision>
   </link>
 
   <link name="robot1_plate">
@@ -113,13 +125,14 @@
                       with_sc="$(arg with_sc)"
                       ros2_control="$(arg ros2_control)"
                       robot_ip="192.160.100.11"
-                      arm_prefix="franka1"
+                      arm_prefix="franka1_"
                       connected_to="franka1_base"
-                      multi_arm="true"
+                      
                       no_prefix="false"
                       use_fake_hardware="$(arg use_fake_hardware)"
                       fake_sensor_commands="$(arg fake_sensor_commands)"
-                      gazebo_effort="$(arg gazebo_effort)">
+                      gazebo_effort="$(arg gazebo_effort)"
+                      >
   </xacro:franka_robot>
 
   <!-- Dimensions taken from technical drawing of Franka plate and custom designed plate, do not touch -->
@@ -147,13 +160,14 @@
                       with_sc="$(arg with_sc)"
                       ros2_control="$(arg ros2_control)"
                       robot_ip="192.160.100.12"
-                      arm_prefix="franka2"
+                      arm_prefix="franka2_"
                       connected_to="franka2_base"
-                      multi_arm="true"
+                     
                       no_prefix="false"
                       use_fake_hardware="$(arg use_fake_hardware)"
                       fake_sensor_commands="$(arg fake_sensor_commands)"
-                      gazebo_effort="$(arg gazebo_effort)">
+                      gazebo_effort="$(arg gazebo_effort)"
+                      >
   </xacro:franka_robot>
 
   <!-- Dimensions taken from technical drawing of Franka plate and custom designed plate, do not touch -->
