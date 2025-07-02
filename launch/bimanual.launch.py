@@ -38,23 +38,27 @@ def robot_description_dependent_nodes_spawner(
         fake_sensor_commands)
     load_gripper_str = context.perform_substitution(load_gripper)
 
-    franka_xacro_filepath = os.path.join(get_package_share_directory(
-        'idra_franka_launch'), 'urdf', 'bimanual.urdf.xacro')
-    robot_description = xacro.process_file(franka_xacro_filepath,
-                                           mappings={
-                                               'ros2_control': 'true',
-                                               'arm_id': arm_id_str,
-                                               'arm_prefix': arm_prefix_str,
-                                               'robot_ip': robot_ip_str,
-                                               'hand': load_gripper_str,
-                                               'use_fake_hardware': use_fake_hardware_str,
-                                               'fake_sensor_commands': fake_sensor_commands_str,
+    franka_xacro_filepath = os.path.join(
+        get_package_share_directory('idra_franka_launch'), 'urdf', 'bimanual.urdf.xacro'
+    )
 
-                                               'gazebo': 'true'
-                                           }).toprettyxml('\t')
+    robot_description = xacro.process_file(
+        franka_xacro_filepath,
+        mappings = {
+            'ros2_control': 'true',
+            'arm_id': arm_id_str,
+            'arm_prefix': arm_prefix_str,
+            'robot_ip': robot_ip_str,
+            'hand': load_gripper_str,
+            'use_fake_hardware': use_fake_hardware_str,
+            'fake_sensor_commands': fake_sensor_commands_str,
+
+            'gazebo': 'true'
+        }
+    ).toprettyxml('\t')
 
     franka_controllers = PathJoinSubstitution(
-        [FindPackageShare('idra_franka_launch'), 'config', 'controllers_ros.yaml']
+        [FindPackageShare('idra_franka_launch'), 'config', 'basic_controllers.yaml']
     )
 
     for prefix in ['franka1', 'franka2']:
@@ -84,15 +88,30 @@ def robot_description_dependent_nodes_spawner(
             name='robot_state_publisher',
             output='screen',
             parameters=[{'robot_description': robot_description}],
-        ),
-
-        #Node(
-        #    package='controller_manager',
-        #    executable='ros2_control_node',
-        #    parameters=[franka_controllers],
-        #    output='screen'
-        #)
-    ]
+        ),        
+        
+        # Node(
+        #     package='controller_manager',
+        #     executable='ros2_control_node',
+        #     parameters = [franka_controllers],
+        #     #parameters=[
+        #     #    ParameterFile(franka_controllers, allow_substs=True),
+        #     #            {'robot_description': robot_description},
+        #     #            {'arm_id': arm_id},
+        #     #            {'load_gripper': load_gripper},
+        #     #            {'arm_prefix': arm_prefix},
+        #     #],
+        #     remappings=[
+        #         ('joint_states', 'franka/joint_states'),
+        #         #('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
+        #     ],
+        #     output={
+        #         'stdout': 'screen',
+        #         'stderr': 'screen',
+        #     },
+        #     on_exit=Shutdown(),
+        # ),
+    ]# 
 
 
 def generate_launch_description():
@@ -145,17 +164,31 @@ def generate_launch_description():
         output='screen'
     )
 
-    controller_left = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-                'joint_position_controller_left'],
+    controller_left = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_position_controller_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
-    controller_right = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-                'joint_position_controller_right'],
+    controller_right = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_position_controller_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
+
+    #controller_left = ExecuteProcess(
+    #    cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+    #            'joint_position_controller_left'],
+    #    output='screen'
+    #)
+
+    # controller_right = ExecuteProcess(
+    #     cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+    #             'joint_position_controller_right'],
+    #     output='screen'
+    # )      
 
     launch_description = LaunchDescription([
         DeclareLaunchArgument(
