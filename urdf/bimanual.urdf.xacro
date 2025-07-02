@@ -107,6 +107,8 @@
 
   <xacro:arg name="multi_arm" default="true" />
 
+  <xacro:arg name="franka1_ip" default="192.168.100.11" />
+  <xacro:arg name="franka2_ip" default="192.168.100.12" />
 
   <!--  _____                _         _  -->
   <!-- |  ___| __ __ _ _ __ | | ____ _/ | -->
@@ -124,7 +126,7 @@
                       ee_id="$(arg ee_id)"
                       with_sc="$(arg with_sc)"
                       ros2_control="$(arg ros2_control)"
-                      robot_ip="192.160.100.11"
+                      robot_ip="$(arg franka1_ip)"
                       arm_prefix="franka1_"
                       connected_to="franka1_base"
                       
@@ -159,7 +161,7 @@
                       ee_id="$(arg ee_id)"
                       with_sc="$(arg with_sc)"
                       ros2_control="$(arg ros2_control)"
-                      robot_ip="192.160.100.12"
+                      robot_ip="$(arg franka2_ip)"
                       arm_prefix="franka2_"
                       connected_to="franka2_base"
                      

@@ -30,7 +30,10 @@ def robot_description_dependent_nodes_spawner(
         use_fake_hardware,
         fake_sensor_commands,
         load_gripper,
-        arm_prefix):
+        arm_prefix,
+        left_ip,
+        right_ip
+    ):
 
     robot_ip_str = context.perform_substitution(robot_ip)
     arm_id_str = context.perform_substitution(arm_id)
@@ -44,6 +47,7 @@ def robot_description_dependent_nodes_spawner(
         get_package_share_directory('idra_franka_launch'), 'urdf', 'bimanual.urdf.xacro'
     )
 
+    p = '\t' # Padding
     robot_description = xacro.process_file(
         franka_xacro_filepath,
         mappings = {
@@ -55,23 +59,25 @@ def robot_description_dependent_nodes_spawner(
             'use_fake_hardware': use_fake_hardware_str,
             'fake_sensor_commands': fake_sensor_commands_str,
 
-            'gazebo': 'true'
+            'gazebo': 'true',
+            'franka1': right_ip,
+            'franka2': left_ip
         }
-    ).toprettyxml('\t')
+    ).toprettyxml(p)
 
     franka_controllers = PathJoinSubstitution(
         [FindPackageShare('idra_franka_launch'), 'config', 'basic_controllers.yaml']
     )
 
-    for prefix in ['franka1', 'franka2']:
+    for i in ['franka1', 'franka2']:
         robot_description = robot_description.replace(
-            '\t<link name="world"/>\n\t<joint name="world_joint" type="fixed">\n\t\t<origin rpy="0 0 0" xyz="0 0 0"/>\n\t\t<parent link="world"/>\n\t\t<child link="fr3_link0"/>\n\t</joint>',
-            '\t<link name="{}_base"/>\n\t<joint name="{}_fr3_{}_base_joint" type="fixed">\n\t\t<origin rpy="0 0 0" xyz="0 0 0"/>\n\t\t<parent link="{}_base"/>\n\t\t<child link="{}_fr3_link0"/>\n\t</joint>'.format(prefix, prefix, prefix, prefix, prefix),
+            f'{p}<link name="world"/>\n{p}<joint name="world_joint" type="fixed">\n{p}{p}<origin rpy="0 0 0" xyz="0 0 0"/>\n{p}{p}<parent link="world"/>\n{p}{p}<child link="fr3_link0"/>\n{p}</joint>',
+            f'{p}<link name="{i}_base"/>\n{p}<joint name="{i}_fr3_{i}_base_joint" type="fixed">\n{p}{p}<origin rpy="0 0 0" xyz="0 0 0"/>\n{p}{p}<parent link="{i}_base"/>\n{p}{p}<child link="{i}_fr3_link0"/>\n{p}</joint>',
             1
         )
     
     robot_description = re.sub(
-        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>[\w\/]+\/franka_gazebo_controllers\.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
+        f'{p}<gazebo>\n{p}{p}<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n{p}{p}{p}<parameters>[\w\/]+\/franka_gazebo_controllers\.yaml</parameters>\n{p}{p}</plugin>\n{p}</gazebo>',
         '',
         robot_description
     )
@@ -108,13 +114,6 @@ def robot_description_dependent_nodes_spawner(
         #     },
         #     on_exit=Shutdown(),
         # ),
-
-        Node(
-            package="controller_manager",
-            executable="ros2_control_node",
-            parameters=[franka_controllers],
-            output="screen"
-        )
     ]
 
 
@@ -127,6 +126,9 @@ def generate_launch_description():
     fake_sensor_commands_parameter_name = 'fake_sensor_commands'
     use_rviz_parameter_name = 'use_rviz'
 
+    robot_left_ip_parameter_name = 'left_ip'
+    robot_right_ip_parameter_name = 'right_ip'
+
     arm_id = LaunchConfiguration(arm_id_parameter_name)
     arm_prefix = LaunchConfiguration(arm_prefix_parameter_name)
     robot_ip = LaunchConfiguration(robot_ip_parameter_name)
@@ -136,6 +138,9 @@ def generate_launch_description():
         fake_sensor_commands_parameter_name
     )
     use_rviz = LaunchConfiguration(use_rviz_parameter_name)
+
+    left_ip = LaunchConfiguration(robot_left_ip_parameter_name)
+    right_ip = LaunchConfiguration(robot_right_ip_parameter_name)
 
     rviz_file = os.path.join(get_package_share_directory('idra_franka_launch'), 'rviz', 'bimanual.rviz')
 
@@ -147,7 +152,10 @@ def generate_launch_description():
             use_fake_hardware,
             fake_sensor_commands,
             load_gripper,
-            arm_prefix
+            arm_prefix,
+
+            left_ip,
+            right_ip
         ]
     )
     
