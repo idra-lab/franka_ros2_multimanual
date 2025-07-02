@@ -194,33 +194,41 @@ def generate_launch_description():
         DeclareLaunchArgument(
             robot_ip_parameter_name,
             description='Hostname or IP address of the robot.',
-            default_value="192.160.100.11",),
+            default_value="192.160.100.11"
+        ),
         DeclareLaunchArgument(
             arm_id_parameter_name,
             description='ID of the type of arm used. Supported values: fer, fr3, fp3',
-            default_value='fr3',),
+            default_value='fr3'
+        ),
         DeclareLaunchArgument(
             arm_prefix_parameter_name,
             description='Name of the robot arm. Used for multiple robot configurations.',
-            default_value='arm1',),
+            default_value='arm1'
+        ),
         DeclareLaunchArgument(
             use_rviz_parameter_name,
             default_value='true',
-            description='Visualize the robot in Rviz'),
+            description='Visualize the robot in Rviz'
+        ),
         DeclareLaunchArgument(
             use_fake_hardware_parameter_name,
             default_value='false',
-            description='Use fake hardware'),
+            description='Use fake hardware'
+        ),
         DeclareLaunchArgument(
             fake_sensor_commands_parameter_name,
             default_value='false',
             description='Fake sensor commands. Only valid when "{}" is true'.format(
-                use_fake_hardware_parameter_name)),
+                use_fake_hardware_parameter_name
+            )
+        ),
         DeclareLaunchArgument(
             load_gripper_parameter_name,
             default_value='true',
             description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
-                        'without an end-effector.'),
+                        'without an end-effector.'
+        ),
 
         robot_description_dependent_nodes_spawner_opaque_function,
         # Node(
