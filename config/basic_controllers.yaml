@@ -14,17 +14,6 @@ controller_manager:
 joint_position_controller_left:
   ros__parameters:
     joints:
-      - franka1_fr3_joint1
-      - franka1_fr3_joint2
-      - franka1_fr3_joint3
-      - franka1_fr3_joint4
-      - franka1_fr3_joint5
-      - franka1_fr3_joint6
-      - franka1_fr3_joint7
-
-joint_position_controller_right:
-  ros__parameters:
-    joints:
       - franka2_fr3_joint1
       - franka2_fr3_joint2
       - franka2_fr3_joint3
@@ -32,3 +21,14 @@ joint_position_controller_right:
       - franka2_fr3_joint5
       - franka2_fr3_joint6
       - franka2_fr3_joint7
+
+joint_position_controller_right:
+  ros__parameters:
+    joints:
+      - franka1_fr3_joint1
+      - franka1_fr3_joint2
+      - franka1_fr3_joint3
+      - franka1_fr3_joint4
+      - franka1_fr3_joint5
+      - franka1_fr3_joint6
+      - franka1_fr3_joint7
