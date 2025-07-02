@@ -7,8 +7,10 @@ from launch.actions import (
     IncludeLaunchDescription,
     OpaqueFunction,
     ExecuteProcess,
+    RegisterEventHandler,
     Shutdown
 )
+from launch.event_handlers import OnProcessExit
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -61,6 +63,12 @@ def robot_description_dependent_nodes_spawner(
             '\t<link name="{}_base"/>\n\t<joint name="{}_fr3_{}_base_joint" type="fixed">\n\t\t<origin rpy="0 0 0" xyz="0 0 0"/>\n\t\t<parent link="{}_base"/>\n\t\t<child link="{}_fr3_link0"/>\n\t</joint>'.format(prefix, prefix, prefix, prefix, prefix),
             1
         )
+    
+    robot_description = robot_description.replace(
+        '\t<gazebo>\n\t\t<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n\t\t\t<parameters>/home/moska002/ros2_ws/install/franka_gazebo_bringup/share/franka_gazebo_bringup/config/franka_gazebo_controllers.yaml</parameters>\n\t\t</plugin>\n\t</gazebo>',
+        '', 1
+    )
+
     print(robot_description)
 
     return [
@@ -71,27 +79,27 @@ def robot_description_dependent_nodes_spawner(
             output='screen',
             parameters=[{'robot_description': robot_description}],
         ),
-        #Node(
-        #    package='controller_manager',
-        #    executable='ros2_control_node',
-        #    parameters=[
-        #        ParameterFile(franka_controllers, allow_substs=True),
-        #        {'robot_description': robot_description},
-        #        {'arm_id': arm_id},
-        #        {'load_gripper': load_gripper},
-        #        {'arm_prefix': arm_prefix},
-        #    ],
-        #    remappings = [
-        #        ('joint_states', 'franka/joint_states'),
-        #        ('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
-        #        # ('joint_states', 'franka/joint_states'),
-        #    ],
-        #    output={
-        #        'stdout': 'screen',
-        #        'stderr': 'screen',
-        #    },
-        #    on_exit=Shutdown(),
-        #),
+
+        # Node(
+        #     package='controller_manager',
+        #     executable='ros2_control_node',
+        #     parameters=[
+        #         ParameterFile(franka_controllers, allow_substs=True),
+        #         {'robot_description': robot_description},
+        #         {'arm_id': arm_id},
+        #         {'load_gripper': load_gripper},
+        #         {'arm_prefix': arm_prefix},
+        #     ],
+        #     remappings = [
+        #         ('joint_states', 'franka/joint_states'),
+        #         ('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
+        #     ],
+        #     output={
+        #         'stdout': 'screen',
+        #         'stderr': 'screen',
+        #     },
+        #     on_exit=Shutdown(),
+        # ),
     ]
 
 
@@ -132,6 +140,25 @@ def generate_launch_description():
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
+    spawn = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=['-topic', '/robot_description'],
+        output='screen',
+    )
+
+    load_joint_state_broadcaster = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+                'joint_state_broadcaster'],
+        output='screen'
+    )
+
+    joint_velocity_example_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+                'joint_position_example_controller'],
+        output='screen'
+    )
+
     launch_description = LaunchDescription([
         DeclareLaunchArgument(
             robot_ip_parameter_name,
@@ -163,14 +190,7 @@ def generate_launch_description():
             default_value='true',
             description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
                         'without an end-effector.'),
-        Node(
-            package='joint_state_publisher',
-            executable='joint_state_publisher',
-            name='joint_state_publisher',
-            parameters=[
-                {'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
-                 'rate': 30}],
-        ),
+
         robot_description_dependent_nodes_spawner_opaque_function,
         # Node(
         #     package='controller_manager',
@@ -215,19 +235,39 @@ def generate_launch_description():
             launch_arguments={'gz_args': 'empty.sdf -r --render-engine ogre'}.items(),
         ),
 
-        # Spawn
-        Node(
-            package='ros_gz_sim',
-            executable='create',
-            arguments=['-topic', '/robot_description'],
-            output='screen',
-        ),
-
+        # Launch Rviz
         Node(package='rviz2',
              executable='rviz2',
              name='rviz2',
              arguments=['--display-config', rviz_file],
              condition=IfCondition(use_rviz)
+        ),
+
+        # Spawn
+        spawn,
+
+        # Controllers
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=spawn,
+                on_exit=[load_joint_state_broadcaster],
+            )
+        ),
+        # RegisterEventHandler(
+        #     event_handler=OnProcessExit(
+        #         target_action=load_joint_state_broadcaster,
+        #         on_exit=[joint_velocity_example_controller],
+        #     )
+        # ),
+
+        Node(
+            package='joint_state_publisher',
+            executable='joint_state_publisher',
+            name='joint_state_publisher',
+            parameters=[{
+                'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
+                'rate': 30
+            }],
         )
     ])
 
