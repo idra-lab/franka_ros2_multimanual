@@ -6,6 +6,7 @@ from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
     OpaqueFunction,
+    ExecuteProcess,
     Shutdown
 )
 from launch.conditions import IfCondition, UnlessCondition
@@ -46,10 +47,21 @@ def robot_description_dependent_nodes_spawner(
                                                'hand': load_gripper_str,
                                                'use_fake_hardware': use_fake_hardware_str,
                                                'fake_sensor_commands': fake_sensor_commands_str,
-                                           }).toprettyxml(indent='  ')
+
+                                               'gazebo': 'true'
+                                           }).toprettyxml('\t')
 
     franka_controllers = PathJoinSubstitution(
-        [FindPackageShare('idra_franka_launch'), 'config', 'controllers_ros.yaml'])
+        [FindPackageShare('idra_franka_launch'), 'config', 'controllers_ros.yaml']
+    )
+
+    for prefix in ['franka1', 'franka2']:
+        robot_description = robot_description.replace(
+            '\t<link name="world"/>\n\t<joint name="world_joint" type="fixed">\n\t\t<origin rpy="0 0 0" xyz="0 0 0"/>\n\t\t<parent link="world"/>\n\t\t<child link="fr3_link0"/>\n\t</joint>',
+            '\t<link name="{}_base"/>\n\t<joint name="{}_fr3_{}_base_joint" type="fixed">\n\t\t<origin rpy="0 0 0" xyz="0 0 0"/>\n\t\t<parent link="{}_base"/>\n\t\t<child link="{}_fr3_link0"/>\n\t</joint>'.format(prefix, prefix, prefix, prefix, prefix),
+            1
+        )
+    print(robot_description)
 
     return [
         Node(
@@ -59,27 +71,28 @@ def robot_description_dependent_nodes_spawner(
             output='screen',
             parameters=[{'robot_description': robot_description}],
         ),
-        # Node(
-        #     package='controller_manager',
-        #     executable='ros2_control_node',
-        #     parameters=[ParameterFile(franka_controllers, allow_substs=True),
-        #                 {'robot_description': robot_description},
-        #                 {'arm_id': arm_id},
-        #                 {'load_gripper': load_gripper},
-        #                 {'arm_prefix': arm_prefix},
-        #                 ],
-        #     remappings=[
-        #         ('joint_states', 'franka/joint_states'),
-        #         ('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
-        #         # ('joint_states', 'franka/joint_states'),
-        #         ],
-        #     output={
-        #         'stdout': 'screen',
-        #         'stderr': 'screen',
-        #     },
-        #     on_exit=Shutdown(),
-        #     ),
-        ]
+        #Node(
+        #    package='controller_manager',
+        #    executable='ros2_control_node',
+        #    parameters=[
+        #        ParameterFile(franka_controllers, allow_substs=True),
+        #        {'robot_description': robot_description},
+        #        {'arm_id': arm_id},
+        #        {'load_gripper': load_gripper},
+        #        {'arm_prefix': arm_prefix},
+        #    ],
+        #    remappings = [
+        #        ('joint_states', 'franka/joint_states'),
+        #        ('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
+        #        # ('joint_states', 'franka/joint_states'),
+        #    ],
+        #    output={
+        #        'stdout': 'screen',
+        #        'stderr': 'screen',
+        #    },
+        #    on_exit=Shutdown(),
+        #),
+    ]
 
 
 def generate_launch_description():
@@ -97,11 +110,11 @@ def generate_launch_description():
     load_gripper = LaunchConfiguration(load_gripper_parameter_name)
     use_fake_hardware = LaunchConfiguration(use_fake_hardware_parameter_name)
     fake_sensor_commands = LaunchConfiguration(
-        fake_sensor_commands_parameter_name)
+        fake_sensor_commands_parameter_name
+    )
     use_rviz = LaunchConfiguration(use_rviz_parameter_name)
 
-    rviz_file = os.path.join(get_package_share_directory('idra_franka_launch'), 'rviz',
-                             'bimanual.rviz')
+    rviz_file = os.path.join(get_package_share_directory('idra_franka_launch'), 'rviz', 'bimanual.rviz')
 
     robot_description_dependent_nodes_spawner_opaque_function = OpaqueFunction(
         function=robot_description_dependent_nodes_spawner,
@@ -111,7 +124,13 @@ def generate_launch_description():
             use_fake_hardware,
             fake_sensor_commands,
             load_gripper,
-            arm_prefix])
+            arm_prefix
+        ]
+    )
+    
+    # Gazebo specific configurations
+    os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
+    pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
     launch_description = LaunchDescription([
         DeclareLaunchArgument(
@@ -188,13 +207,28 @@ def generate_launch_description():
         #                       use_fake_hardware_parameter_name: use_fake_hardware}.items(),
         #     condition=IfCondition(load_gripper)
         # ),
+
+        # Launch Gazebo
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
+            launch_arguments={'gz_args': 'empty.sdf -r --render-engine ogre'}.items(),
+        ),
+
+        # Spawn
+        Node(
+            package='ros_gz_sim',
+            executable='create',
+            arguments=['-topic', '/robot_description'],
+            output='screen',
+        ),
+
         Node(package='rviz2',
              executable='rviz2',
              name='rviz2',
              arguments=['--display-config', rviz_file],
              condition=IfCondition(use_rviz)
-             )
-
+        )
     ])
 
     return launch_description
