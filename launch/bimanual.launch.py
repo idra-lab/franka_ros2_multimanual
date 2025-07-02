@@ -8,9 +8,10 @@ from launch.actions import (
     OpaqueFunction,
     ExecuteProcess,
     RegisterEventHandler,
+    LogInfo,
     Shutdown
 )
-from launch.event_handlers import OnProcessExit
+from launch.event_handlers import OnProcessExit, OnShutdown
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -79,7 +80,7 @@ def robot_description_dependent_nodes_spawner(
         1
     )
 
-    print(robot_description)
+    # print(robot_description)
 
     return [
         Node(
@@ -111,7 +112,14 @@ def robot_description_dependent_nodes_spawner(
         #     },
         #     on_exit=Shutdown(),
         # ),
-    ]# 
+
+        # Node(
+        #     package="controller_manager",
+        #     executable="ros2_control_node",
+        #     parameters=[robot_description, franka_controllers],
+        #     output="screen"
+        # )
+    ]
 
 
 def generate_launch_description():
@@ -158,9 +166,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    load_joint_state_broadcaster = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-                'joint_state_broadcaster'],
+    load_joint_state_broadcaster = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -178,17 +187,13 @@ def generate_launch_description():
         output='screen'
     )
 
-    #controller_left = ExecuteProcess(
-    #    cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-    #            'joint_position_controller_left'],
-    #    output='screen'
-    #)
-
-    # controller_right = ExecuteProcess(
-    #     cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-    #             'joint_position_controller_right'],
-    #     output='screen'
-    # )      
+    on_shutdown = RegisterEventHandler(
+        OnShutdown(
+            on_shutdown=[
+                LogInfo(msg='Shutting down cleanly...'),
+            ]
+        )
+    )
 
     launch_description = LaunchDescription([
         DeclareLaunchArgument(
@@ -315,7 +320,9 @@ def generate_launch_description():
                 'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
                 'rate': 30
             }],
-        )
+        ), 
+
+        on_shutdown
     ])
 
     return launch_description
