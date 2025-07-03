@@ -119,7 +119,7 @@ def generate_launch_description():
     use_gazebo_parameter_name = 'use_gazebo'
     enable_self_collisions_parameter_name = 'enable_self_collisions'
     use_fake_hardware_parameter_name = 'use_fake_hardware'
-    fake_sensor_commands_parameter_name = 'fake_sensor_commands'
+    fake_sensor_commands_parameter_name = 'use_fake_sensor_commands'
 
     robot_left_ip_parameter_name = 'left_ip'
     robot_right_ip_parameter_name = 'right_ip'
