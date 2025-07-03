@@ -86,7 +86,7 @@ def robot_description_dependent_nodes_spawner(
         robot_description
     )
 
-    print(robot_description)
+    # print(robot_description)
 
     return [
         Node(
@@ -97,27 +97,17 @@ def robot_description_dependent_nodes_spawner(
             parameters=[{'robot_description': robot_description}],
         ),        
         
-        # Node(
-        #     package='controller_manager',
-        #     executable='ros2_control_node',
-        #     parameters = [franka_controllers],
-        #     #parameters=[
-        #     #    ParameterFile(franka_controllers, allow_substs=True),
-        #     #            {'robot_description': robot_description},
-        #     #            {'arm_id': arm_id},
-        #     #            {'load_gripper': load_gripper},
-        #     #            {'arm_prefix': arm_prefix},
-        #     #],
-        #     remappings=[
-        #         ('joint_states', 'franka/joint_states'),
-        #         #('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
-        #     ],
-        #     output={
-        #         'stdout': 'screen',
-        #         'stderr': 'screen',
-        #     },
-        #     on_exit=Shutdown(),
-        # ),
+        Node(
+            package='controller_manager',
+            executable='ros2_control_node',
+            parameters=[
+                {"robot_description": robot_description},
+                franka_controllers_str
+            ],
+            output='screen',
+            condition=UnlessCondition(use_gazebo),
+            on_exit=Shutdown(),
+        ),
     ]
 
 
@@ -168,7 +158,7 @@ def generate_launch_description():
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
-    # TODO: Check if it could brake controller spawn if use_gazebo = false
+    # TODO: Check real fingers publishers (yes with gazebo, no without)
     spawn = Node(
         package='ros_gz_sim',
         executable='create',
@@ -315,12 +305,7 @@ def generate_launch_description():
         spawn,
 
         # Controllers
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=spawn,
-                on_exit=[load_joint_state_broadcaster],
-            ),
-        ),
+        load_joint_state_broadcaster,
 
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -336,16 +321,16 @@ def generate_launch_description():
             )
         ),
 
-        Node(
-            package='joint_state_publisher',
-            executable='joint_state_publisher',
-            name='joint_state_publisher',
-            parameters=[{
-                'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
-                'rate': 30
-            }],
-            condition = UnlessCondition(use_gazebo)
-        ), 
+        # Node(
+        #     package='joint_state_publisher',
+        #     executable='joint_state_publisher',
+        #     name='joint_state_publisher',
+        #     parameters=[{
+        #         'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
+        #         'rate': 30
+        #     }],
+        #     condition = UnlessCondition(use_gazebo)
+        # ), 
 
         on_shutdown
     ])
