@@ -7,7 +7,6 @@ from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
     OpaqueFunction,
-    ExecuteProcess,
     RegisterEventHandler,
     LogInfo,
     Shutdown
@@ -18,30 +17,34 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from launch_ros.parameter_descriptions import ParameterFile
 
 import xacro
 
 
 def robot_description_dependent_nodes_spawner(
         context: LaunchContext,
-        robot_ip,
-        arm_id,
+        use_gazebo,
         use_fake_hardware,
         fake_sensor_commands,
         load_gripper,
-        arm_prefix,
+        gripper_type,
+        self_collisions,
         left_ip,
         right_ip
     ):
 
-    robot_ip_str = context.perform_substitution(robot_ip)
-    arm_id_str = context.perform_substitution(arm_id)
-    arm_prefix_str = context.perform_substitution(arm_prefix)
+    load_gripper_str = context.perform_substitution(load_gripper)
+    gripper_type_str = context.perform_substitution(gripper_type)
+
+    use_gazebo_str = context.perform_substitution(use_gazebo)
+    self_collisions_str = context.perform_substitution(self_collisions)
     use_fake_hardware_str = context.perform_substitution(use_fake_hardware)
     fake_sensor_commands_str = context.perform_substitution(
-        fake_sensor_commands)
-    load_gripper_str = context.perform_substitution(load_gripper)
+        fake_sensor_commands
+    )
+
+    left_ip_str = context.perform_substitution(left_ip)
+    right_ip_str = context.perform_substitution(right_ip)
 
     franka_xacro_filepath = os.path.join(
         get_package_share_directory('idra_franka_launch'), 'urdf', 'bimanual.urdf.xacro'
@@ -50,18 +53,18 @@ def robot_description_dependent_nodes_spawner(
     p = '\t' # Padding
     robot_description = xacro.process_file(
         franka_xacro_filepath,
-        mappings = {
-            'ros2_control': 'true',
-            'arm_id': arm_id_str,
-            'arm_prefix': arm_prefix_str,
-            'robot_ip': robot_ip_str,
+        mappings = {      
             'hand': load_gripper_str,
+            'ee_id': gripper_type_str, 
+            
+            'gazebo': use_gazebo_str,
+            'ros2_control': 'true',
+            'with_sc': self_collisions_str,
             'use_fake_hardware': use_fake_hardware_str,
             'fake_sensor_commands': fake_sensor_commands_str,
 
-            'gazebo': 'true',
-            'franka1': right_ip,
-            'franka2': left_ip
+            'franka1_ip': right_ip_str,
+            'franka2_ip': left_ip_str
         }
     ).toprettyxml(p)
 
@@ -118,26 +121,28 @@ def robot_description_dependent_nodes_spawner(
 
 
 def generate_launch_description():
-    arm_id_parameter_name = 'arm_id'
-    arm_prefix_parameter_name = 'arm_prefix'
-    robot_ip_parameter_name = 'robot_ip'
     load_gripper_parameter_name = 'load_gripper'
+    gripper_type_parameter_name = 'gripper_type'
+
+    use_rviz_parameter_name = 'use_rviz'
+    use_gazebo_parameter_name = 'use_gazebo'
+    enable_self_collisions_parameter_name = 'enable_self_collisions'
     use_fake_hardware_parameter_name = 'use_fake_hardware'
     fake_sensor_commands_parameter_name = 'fake_sensor_commands'
-    use_rviz_parameter_name = 'use_rviz'
 
     robot_left_ip_parameter_name = 'left_ip'
     robot_right_ip_parameter_name = 'right_ip'
 
-    arm_id = LaunchConfiguration(arm_id_parameter_name)
-    arm_prefix = LaunchConfiguration(arm_prefix_parameter_name)
-    robot_ip = LaunchConfiguration(robot_ip_parameter_name)
     load_gripper = LaunchConfiguration(load_gripper_parameter_name)
+    gripper_type = LaunchConfiguration(gripper_type_parameter_name)
+
+    use_rviz = LaunchConfiguration(use_rviz_parameter_name)
+    use_gazebo = LaunchConfiguration(use_gazebo_parameter_name)
+    enable_self_collisions = LaunchConfiguration(enable_self_collisions_parameter_name)
     use_fake_hardware = LaunchConfiguration(use_fake_hardware_parameter_name)
     fake_sensor_commands = LaunchConfiguration(
         fake_sensor_commands_parameter_name
     )
-    use_rviz = LaunchConfiguration(use_rviz_parameter_name)
 
     left_ip = LaunchConfiguration(robot_left_ip_parameter_name)
     right_ip = LaunchConfiguration(robot_right_ip_parameter_name)
@@ -147,13 +152,12 @@ def generate_launch_description():
     robot_description_dependent_nodes_spawner_opaque_function = OpaqueFunction(
         function=robot_description_dependent_nodes_spawner,
         args=[
-            robot_ip,
-            arm_id,
+            use_gazebo,
             use_fake_hardware,
             fake_sensor_commands,
             load_gripper,
-            arm_prefix,
-
+            gripper_type,
+            enable_self_collisions,
             left_ip,
             right_ip
         ]
@@ -163,11 +167,13 @@ def generate_launch_description():
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
+    # TODO: Check if it could brake controller spawn
     spawn = Node(
         package='ros_gz_sim',
         executable='create',
         arguments=['-topic', '/robot_description'],
         output='screen',
+        condition=IfCondition(use_gazebo)
     )
 
     load_joint_state_broadcaster = Node(
@@ -201,24 +207,19 @@ def generate_launch_description():
 
     launch_description = LaunchDescription([
         DeclareLaunchArgument(
-            robot_ip_parameter_name,
-            description='Hostname or IP address of the robot.',
-            default_value="192.160.100.11"
-        ),
-        DeclareLaunchArgument(
-            arm_id_parameter_name,
-            description='ID of the type of arm used. Supported values: fer, fr3, fp3',
-            default_value='fr3'
-        ),
-        DeclareLaunchArgument(
-            arm_prefix_parameter_name,
-            description='Name of the robot arm. Used for multiple robot configurations.',
-            default_value='arm1'
+            use_gazebo_parameter_name,
+            description='Open and spawn the robot in Gazebo',
+            default_value='false'
         ),
         DeclareLaunchArgument(
             use_rviz_parameter_name,
             default_value='true',
             description='Visualize the robot in Rviz'
+        ),
+        DeclareLaunchArgument(
+            enable_self_collisions_parameter_name,
+            default_value='false',
+            description='Enables self collisions.'
         ),
         DeclareLaunchArgument(
             use_fake_hardware_parameter_name,
@@ -239,13 +240,28 @@ def generate_launch_description():
                         'without an end-effector.'
         ),
 
+        # TODO Cobot pump not working
+        DeclareLaunchArgument(
+            gripper_type_parameter_name,
+            description='Select the gripper type of the end-effector. '
+                        'You can select between franka_hand and cobot_pump',
+            default_value='franka_hand'
+        ),
+        DeclareLaunchArgument(
+            robot_left_ip_parameter_name,
+            description='IP of the left robot arm. '
+                        'This parameter is used only when not in Gazebo',
+            default_value='192.168.0.1'
+        ),
+        DeclareLaunchArgument(
+            robot_right_ip_parameter_name,
+            description='IP of the right robot arm. '
+                        'This parameter is used only when not in Gazebo',
+            default_value='192.168.0.2'
+        ),
+
         robot_description_dependent_nodes_spawner_opaque_function,
-        # Node(
-        #     package='controller_manager',
-        #     executable='spawner',
-        #     arguments=['joint_state_broadcaster'],
-        #     output='screen',
-        # ),
+
         # Node(
         #     package='controller_manager',
         #     executable='spawner',
@@ -279,16 +295,19 @@ def generate_launch_description():
         # Launch Gazebo
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
+                os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
+            ),
             launch_arguments={'gz_args': 'empty.sdf -r --render-engine ogre'}.items(),
+            condition=IfCondition(use_gazebo)
         ),
 
         # Launch Rviz
-        Node(package='rviz2',
-             executable='rviz2',
-             name='rviz2',
-             arguments=['--display-config', rviz_file],
-             condition=IfCondition(use_rviz)
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            arguments=['--display-config', rviz_file],
+            condition=IfCondition(use_rviz)
         ),
 
         # Spawn
@@ -299,7 +318,7 @@ def generate_launch_description():
             event_handler=OnProcessExit(
                 target_action=spawn,
                 on_exit=[load_joint_state_broadcaster],
-            )
+            ),
         ),
 
         RegisterEventHandler(
@@ -316,15 +335,16 @@ def generate_launch_description():
             )
         ),
 
-        # Node(
-        #     package='joint_state_publisher',
-        #     executable='joint_state_publisher',
-        #     name='joint_state_publisher',
-        #     parameters=[{
-        #         'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
-        #         'rate': 30
-        #     }],
-        # ), 
+        Node(
+            package='joint_state_publisher',
+            executable='joint_state_publisher',
+            name='joint_state_publisher',
+            parameters=[{
+                'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
+                'rate': 30
+            }],
+            condition = UnlessCondition(use_gazebo)
+        ), 
 
         on_shutdown
     ])
