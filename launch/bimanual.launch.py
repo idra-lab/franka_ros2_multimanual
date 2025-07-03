@@ -1,5 +1,6 @@
 import os
 import re
+import xacro
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchContext, LaunchDescription
@@ -17,9 +18,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-
-import xacro
-
 
 def robot_description_dependent_nodes_spawner(
         context: LaunchContext,
@@ -50,6 +48,11 @@ def robot_description_dependent_nodes_spawner(
         get_package_share_directory('idra_franka_launch'), 'urdf', 'bimanual.urdf.xacro'
     )
 
+    franka_controllers = PathJoinSubstitution(
+        [FindPackageShare('idra_franka_launch'), 'config', 'basic_controllers.yaml']
+    )
+    franka_controllers_str =  franka_controllers.perform(context)
+
     p = '\t' # Padding
     robot_description = xacro.process_file(
         franka_xacro_filepath,
@@ -64,13 +67,11 @@ def robot_description_dependent_nodes_spawner(
             'fake_sensor_commands': fake_sensor_commands_str,
 
             'franka1_ip': right_ip_str,
-            'franka2_ip': left_ip_str
+            'franka2_ip': left_ip_str,
+
+            'controller_path': franka_controllers_str
         }
     ).toprettyxml(p)
-
-    franka_controllers = PathJoinSubstitution(
-        [FindPackageShare('idra_franka_launch'), 'config', 'basic_controllers.yaml']
-    )
 
     for i in ['franka1', 'franka2']:
         robot_description = robot_description.replace(
@@ -167,7 +168,7 @@ def generate_launch_description():
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
-    # TODO: Check if it could brake controller spawn
+    # TODO: Check if it could brake controller spawn if use_gazebo = false
     spawn = Node(
         package='ros_gz_sim',
         executable='create',

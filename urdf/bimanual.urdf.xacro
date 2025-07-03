@@ -110,6 +110,8 @@
   <xacro:arg name="franka1_ip" default="192.168.100.11" />
   <xacro:arg name="franka2_ip" default="192.168.100.12" />
 
+  <xacro:arg name="controller_path" default="$(find idra_franka_launch)/config/basic_controllers.yaml" />
+
   <!--  _____                _         _  -->
   <!-- |  ___| __ __ _ _ __ | | ____ _/ | -->
   <!-- | |_ | '__/ _` | '_ \| |/ / _` | | -->
@@ -182,7 +184,7 @@
   <xacro:if value="$(arg gazebo)">
   <gazebo>
     <plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
-      <parameters>$(find idra_franka_launch)/config/basic_controllers.yaml</parameters>
+      <parameters>$(arg controller_path)</parameters>
     </plugin>
   </gazebo>
   </xacro:if>
