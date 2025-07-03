@@ -101,8 +101,10 @@ def robot_description_dependent_nodes_spawner(
             package='controller_manager',
             executable='ros2_control_node',
             parameters=[
-                {"robot_description": robot_description},
                 franka_controllers_str
+            ],
+            remappings=[
+                ('~/robot_description', '/robot_description')
             ],
             output='screen',
             condition=UnlessCondition(use_gazebo),
