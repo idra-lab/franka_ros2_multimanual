@@ -107,8 +107,8 @@
 
   <xacro:arg name="multi_arm" default="true" />
 
-  <xacro:arg name="franka1_ip" default="192.168.100.11" />
-  <xacro:arg name="franka2_ip" default="192.168.100.12" />
+  <xacro:arg name="franka1_ip" default="192.160.100.11" />
+  <xacro:arg name="franka2_ip" default="192.160.100.12" />
 
   <xacro:arg name="controller_path" default="$(find idra_franka_launch)/config/basic_controllers.yaml" />
 
@@ -180,6 +180,74 @@
     <child link="franka2_base"/>
     <origin xyz="0.145 0.107 0.018" rpy="0 0 ${-pi/2}"/>
   </joint>
+
+  <!-- TODO: add if based on ros2_control arg -->
+  <ros2_control name="FrankaBimanualHardwareInterface" type="system">
+    <hardware>
+      <xacro:if value="$(arg use_fake_hardware)">
+        <plugin>fake_components/GenericSystem</plugin>
+        <param name="mock_sensor_commands">$(arg use_fake_hardware)</param>
+        <param name="state_following_offset">0.0</param>
+      </xacro:if>
+
+      <xacro:if value="$(arg gazebo)">
+        <plugin>franka_ign_ros2_control/IgnitionSystem</plugin>
+      </xacro:if>
+
+      <xacro:if value="$(eval not use_fake_hardware and not gazebo)">
+        <plugin>franka_bimanual_hardware_interface/FrankaBimanualHardwareInterface</plugin>
+        <param name="franka1_ip">$(arg franka1_ip)</param>
+        <param name="franka2_ip">$(arg franka2_ip)</param>
+      </xacro:if>
+    </hardware>
+
+    <!-- Joint position, velocity and effort interfaces -->
+    <xacro:macro name="configure_joint" params="joint_name initial_position">
+      <joint name="${joint_name}">
+        <!--
+          deactivated for gazebo velocity and position interface due to a bug
+          https://github.com/ros-controls/gz_ros2_control/issues/343
+
+          Command Interfaces -->
+          <command_interface name="position"/>
+          <command_interface name="velocity"/>
+        <xacro:if value="$(eval not gazebo or gazebo_effort)">
+          <command_interface name="effort"/>
+        </xacro:if>
+
+        <!-- State Interfaces -->
+        <state_interface name="position">
+          <param name="initial_value">${initial_position}</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+          <param name="initial_value">0.0</param>
+        <state_interface name="effort"/>
+      </joint>
+    </xacro:macro>
+
+
+    <xacro:configure_joint joint_name="franka1_fr3_joint1" initial_position="0.0"/>
+    <xacro:configure_joint joint_name="franka1_fr3_joint2" initial_position="${-pi/4}"/>
+    <xacro:configure_joint joint_name="franka1_fr3_joint3" initial_position="0.0"/>
+    <xacro:configure_joint joint_name="franka1_fr3_joint4" initial_position="${-3*pi/4}"/>
+    <xacro:configure_joint joint_name="franka1_fr3_joint5" initial_position="0.0"/>
+    <xacro:configure_joint joint_name="franka1_fr3_joint6" initial_position="${pi/2}"/>
+    <xacro:configure_joint joint_name="franka1_fr3_joint7" initial_position="${pi/4}"/>
+    <xacro:if value="$(eval gazebo and hand)">
+      <xacro:configure_joint joint_name="$franka1_fr3_finger_joint1" initial_position="0.0" />
+    </xacro:if>
+
+    <xacro:configure_joint joint_name="franka2_fr3_joint1" initial_position="0.0"/>
+    <xacro:configure_joint joint_name="franka2_fr3_joint2" initial_position="${-pi/4}"/>
+    <xacro:configure_joint joint_name="franka2_fr3_joint3" initial_position="0.0"/>
+    <xacro:configure_joint joint_name="franka2_fr3_joint4" initial_position="${-3*pi/4}"/>
+    <xacro:configure_joint joint_name="franka2_fr3_joint5" initial_position="0.0"/>
+    <xacro:configure_joint joint_name="franka2_fr3_joint6" initial_position="${pi/2}"/>
+    <xacro:configure_joint joint_name="franka2_fr3_joint7" initial_position="${pi/4}"/>
+    <xacro:if value="$(eval gazebo and hand)">
+      <xacro:configure_joint joint_name="$franka2_fr3_finger_joint1" initial_position="0.0" />
+    </xacro:if>
+  </ros2_control>
 
   <xacro:if value="$(arg gazebo)">
   <gazebo>

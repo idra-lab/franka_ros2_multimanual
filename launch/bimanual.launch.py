@@ -61,7 +61,7 @@ def robot_description_dependent_nodes_spawner(
             'ee_id': gripper_type_str, 
             
             'gazebo': use_gazebo_str,
-            'ros2_control': 'true',
+            'ros2_control': 'false',
             'with_sc': self_collisions_str,
             'use_fake_hardware': use_fake_hardware_str,
             'fake_sensor_commands': fake_sensor_commands_str,
