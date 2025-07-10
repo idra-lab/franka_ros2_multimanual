@@ -46,7 +46,7 @@ class PositionPublisher(Node):
         position = self.amplitude * math.sin(2 * math.pi * self.frequency * elapsed_time)
 
         msg = Float64MultiArray()
-        msg.data = [0.0, 0.0, 0.0, 0.0, 1, 0.0, 0.0]
+        msg.data = [0.465088, -0.107690, 0.149491, -1.936844, -2.535822, 1.673192, 2.566144]
         self.publisher_left.publish(msg)
         self.publisher_right.publish(msg)
         self.get_logger().info(f'Sent: "{msg.data}"')

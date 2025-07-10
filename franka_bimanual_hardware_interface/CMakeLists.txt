@@ -55,6 +55,7 @@ install(
 
 install(
   PROGRAMS
+    scripts/position_test.py
     scripts/velocity_test.py
     scripts/effort_test.py
   DESTINATION lib/${PROJECT_NAME}
