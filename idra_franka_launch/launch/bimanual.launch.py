@@ -179,14 +179,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_position_controller_left', '--controller-manager', '/controller_manager'],
+        arguments=['joint_effort_controller_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_position_controller_right', '--controller-manager', '/controller_manager'],
+        arguments=['joint_effort_controller_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
