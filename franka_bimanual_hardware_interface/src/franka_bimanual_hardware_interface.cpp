@@ -69,6 +69,16 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
     arms[0].name = "franka2";
     RCLCPP_INFO(get_logger(), "Done!");
 
+    /*
+    for ( long i = 0; i < 2; ++i ) {
+        // Creates problem when different size of prefixes/ip, check
+        RobotUnit frk;
+        frk.arm = std::make_unique<Robot>(franka2_ip);
+        frk.name = "franka2";
+        arms.push_back(std::move(frk));
+    }
+    */
+
     // Reading initial state
     // update_state();
     // bimanual_cmd = bimanual_state;
@@ -260,7 +270,7 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
     // RCLCPP_INFO(get_logger(), "%s", control_mode);
     for (long i = 0; i < arms.size(); ++i) {
         if (arms[i].control) {
-            if (control_mode == ControlMode::POSITION) {
+            if (control_mode == ControlMode::POSITION && !arms[i].first_position_update) {
                 std::copy(arms[i].if_cmds.q.begin(), arms[i].if_cmds.q.end(), joint_command.begin());
                 JointPositions position_command{joint_command};
 
@@ -269,6 +279,10 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
                     franka::computeLowerLimitsJointVelocity(arms[i].current_state.q_d),
                     franka::kMaxJointAcceleration, franka::kMaxJointJerk, position_command.q,
                     arms[i].current_state.q_d, arms[i].current_state.dq_d, arms[i].current_state.ddq_d);
+                
+                RCLCPP_INFO(get_logger(), "%f %f %f %f %f %f %f ", 
+                    position_command.q[0], position_command.q[1], position_command.q[2], position_command.q[3],
+                    position_command.q[4], position_command.q[5], position_command.q[6]);
 
                 arms[i].control->writeOnce(position_command);
             } else if (control_mode == ControlMode::VELOCITY) {
@@ -288,10 +302,6 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
 
                 torque_command.tau_J =
                     franka::limitRate(franka::kMaxTorqueRate, torque_command.tau_J, arms[i].current_state.tau_J_d);
-
-                RCLCPP_INFO(get_logger(), "%f %f %f %f %f %f %f ", 
-                    torque_command.tau_J[0], torque_command.tau_J[1], torque_command.tau_J[2], torque_command.tau_J[3],
-                    torque_command.tau_J[4], torque_command.tau_J[5], torque_command.tau_J[6]);
 
                 arms[i].control->writeOnce(torque_command);
             }
@@ -328,10 +338,7 @@ HardwareInterface::perform_command_mode_switch(
 
         control_mode = ControlMode::POSITION;
         for (long i = 0; i < arms.size(); ++i) {
-            std::copy(
-                arms[i].if_states.q.begin(), arms[i].if_states.q.end(),
-                arms[i].if_cmds.q.begin()
-            );
+            arms[i].first_position_update = true;
         }
     } else if (iface.find("velocity") != std::string::npos) {
         RCLCPP_INFO(get_logger(), "Starting interface velocity...");
@@ -413,6 +420,12 @@ bool HardwareInterface::update_state(RobotUnit& robot) {
         robot.if_states.q   = state.q;
         robot.if_states.qd  = state.dq;
         robot.if_states.tau = state.tau_J;
+
+        if (robot.first_position_update && control_mode == ControlMode::POSITION) {
+            RCLCPP_INFO(get_logger(), "First position initialized in arm %s", robot.name.c_str());
+            std::copy(robot.if_states.q.begin(), robot.if_states.q.end(), robot.if_cmds.q.begin());
+            robot.first_position_update = false;
+        }
     } catch (const franka::ControlException& e) {
         RCLCPP_ERROR(get_logger(), "Exception in arm %s: %s", robot.name.c_str(), e.what());
         return false;
