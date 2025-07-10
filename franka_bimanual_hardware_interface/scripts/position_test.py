@@ -6,6 +6,8 @@ from rclpy.node import Node
 
 from std_msgs.msg import Float64MultiArray
 
+# WARN: I think this is quite instable to use as is
+
 class PositionPublisher(Node):
 
     def __init__(self):
