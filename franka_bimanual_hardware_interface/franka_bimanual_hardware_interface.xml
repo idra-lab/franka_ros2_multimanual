@@ -1,0 +1,9 @@
+<library path="franka_bimanual_hardware_interface">
+  <class name="franka_bimanual_hardware_interface/FrankaBimanualHardwareInterface"
+         type="franka::HardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+    Bimanual Franka robot hardware interface.
+    </description>
+  </class>
+</library>
