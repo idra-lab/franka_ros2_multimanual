@@ -89,7 +89,7 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    const std::string& franka1_ip = info_.hardware_parameters.at("franka1_ip");
+    const std::string& franka1_ip = ips[0];
     RCLCPP_INFO(get_logger(), "Connection with the first arm...");
     // arms[0].arm = std::make_unique<Robot>(franka1_ip);
     // arms[0].name = "franka1";
@@ -97,7 +97,7 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
     RCLCPP_INFO(get_logger(), "Done!");
 
     // Connection with second arm
-    const std::string& franka2_ip = info_.hardware_parameters.at("franka2_ip");
+    const std::string& franka2_ip = ips[1];
     RCLCPP_INFO(get_logger(), "Connection with the second arm...");
     arms[0].arm = std::make_unique<Robot>(franka2_ip);
     arms[0].name = "franka2";
