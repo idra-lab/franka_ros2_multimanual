@@ -126,8 +126,6 @@ private:
     rclcpp::Logger logger = rclcpp::get_logger("franka_bimanual_hardware_interface");
 
     std::vector<RobotUnit> arms; 
-    std::vector<std::string> prefixes;
-    std::vector<std::string> ips;
 
     ControlMode control_mode   = ControlMode::INACTIVE;
     std::mutex control_mutex;    

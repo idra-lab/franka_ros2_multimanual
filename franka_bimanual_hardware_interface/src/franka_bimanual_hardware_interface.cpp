@@ -47,44 +47,40 @@ HardwareInterface::on_init (
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    RCLCPP_INFO(get_logger(), "Initializing robot names");
+    RCLCPP_INFO(get_logger(), "Initializing parameters...");
 
     std::regex name_regex("([\\w-]+)");
     const std::string& name_list = info.hardware_parameters.at("robot_names");
     auto name_begin = std::sregex_iterator(name_list.begin(), name_list.end(), name_regex);
     auto name_end   = std::sregex_iterator();
-    for (auto it = name_begin; it != name_end; ++it) {
-        prefixes.push_back(it->str());
-    }
+    long name_size  = std::distance(name_begin, name_end);
 
-    RCLCPP_INFO(get_logger(), "Found %lu robots", prefixes.size());
-
-    RCLCPP_INFO(get_logger(), "Initializing robot IPs");
+    RCLCPP_INFO(get_logger(), "Found %lu robots", name_size);
 
     std::regex ip_regex("((\\d{1,3}\\.){3}\\d{1,3}\\b)");
     const std::string& ip_list = info.hardware_parameters.at("robot_ips");
     auto ip_begin = std::sregex_iterator(ip_list.begin(), ip_list.end(), ip_regex);
     auto ip_end   = std::sregex_iterator();
-    for (auto it = ip_begin; it != ip_end; ++it) {
-        ips.push_back(it->str());
-    }
+    long ip_size  = std::distance(ip_begin, ip_end);
    
-    RCLCPP_INFO(get_logger(), "Found %lu IPs", ips.size());
+    RCLCPP_INFO(get_logger(), "Found %lu IPs", ip_size);
 
-    if (prefixes.size() != ips.size()) {
+    if (name_size != ip_size) {
         RCLCPP_ERROR(get_logger(), "Names and IPs of robots do not match");
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    for ( long i = 0; i < ips.size(); ++i ) {
+    auto name_it = name_begin;
+    auto ip_it = ip_begin;
+    for ( long i = 0; i < ip_size; ++i ) {
         RobotUnit frk;
 
-        frk.name = prefixes[i];
-        frk.ip = ips[i];
-
+        frk.name = name_it->str();
+        frk.ip = ip_it->str();
         arms.push_back(std::move(frk));
 
-        RCLCPP_INFO(get_logger(), "Done!");
+        ++name_it;
+        ++ip_it;
     }
 
     RCLCPP_INFO(get_logger(), "Initialized %lu robots", arms.size());
@@ -234,11 +230,11 @@ HardwareInterface::export_state_interfaces() {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     std::string jnt_name = {};
 
-    state_interfaces.reserve(7 * 3 * prefixes.size());  // NOLINT: 7 joints * 3 states * n robots
+    state_interfaces.reserve(7 * 3 * arms.size());  // NOLINT: 7 joints * 3 states * n robots
 
     for (long p = 0; p < arms.size(); ++p) {
         for (long i = 0; i < 7; ++i) {
-            jnt_name = prefixes[p] + "_fr3_joint" + std::to_string(i+1);
+            jnt_name = arms[p].name + "_fr3_joint" + std::to_string(i+1);
             RCLCPP_INFO(get_logger(), "%s", jnt_name.c_str());
 
             state_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].if_states.q[i]);
@@ -260,11 +256,11 @@ HardwareInterface::export_command_interfaces() {
     std::string jnt_name = {};
 
     // TODO: GPIO intefaces?
-    cmd_interfaces.reserve(7 * 3 * prefixes.size());  // NOLINT: 7 joints * 3 cmd interfaces * n robots
+    cmd_interfaces.reserve(7 * 3 * arms.size());  // NOLINT: 7 joints * 3 cmd interfaces * n robots
 
     for (long p = 0; p < arms.size(); ++p) {
         for (long i = 0; i < 7; ++i) {
-            jnt_name = prefixes[p] + "_fr3_joint" + std::to_string(i+1);
+            jnt_name = arms[p].name + "_fr3_joint" + std::to_string(i+1);
 
             cmd_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].if_cmds.q[i]);
             cmd_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].if_cmds.qd[i]);
