@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 #include <memory>
 #include <stdexcept>
+#include <regex>
 
 #include <rclcpp/duration.hpp>
 
@@ -31,21 +32,54 @@ INFO
 
 using franka::HardwareInterface;
 
-/*
-hardware_interface::CallbackReturn 
-HardwareInterface::on_init (
-    const hardware_interface::HardwareInfo &hardware_info
-) {
-    return hardware_interface::CallbackReturn::SUCCESS;
-}
-*/
-
 //  ____   ____ _     ____ ____  ____    _     _  __       ____           _
 // |  _ \ / ___| |   / ___|  _ \|  _ \  | |   (_)/ _| ___ / ___|   _  ___| | ___
 // | |_) | |   | |  | |   | |_) | |_) | | |   | | |_ / _ \ |  | | | |/ __| |/ _ \
 // |  _ <| |___| |__| |___|  __/|  __/  | |___| |  _|  __/ |__| |_| | (__| |  __/
 // |_| \_\\____|_____\____|_|   |_|     |_____|_|_|  \___|\____\__, |\___|_|\___|
 //                                                             |___/
+
+hardware_interface::CallbackReturn 
+HardwareInterface::on_init (
+    const hardware_interface::HardwareInfo &info
+) {
+    if (SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
+        return hardware_interface::CallbackReturn::ERROR;
+    }
+
+    RCLCPP_INFO(get_logger(), "Initializing robot names");
+
+    std::regex name_regex("([\\w-]+)");
+    const std::string& name_list = info.hardware_parameters.at("robot_names");
+    auto name_begin = std::sregex_iterator(name_list.begin(), name_list.end(), name_regex);
+    auto name_end   = std::sregex_iterator();
+    for (auto it = name_begin; it != name_end; ++it) {
+        // prefixes.push_back(it->str());
+    }
+
+    RCLCPP_INFO(get_logger(), "Found %lu robots", prefixes.size());
+
+    RCLCPP_INFO(get_logger(), "Initializing robot IPs");
+
+    std::regex ip_regex("((\\d{1,3}\\.){3}\\d{1,3}\\b)");
+    const std::string& ip_list = info.hardware_parameters.at("robot_ips");
+    auto ip_begin = std::sregex_iterator(ip_list.begin(), ip_list.end(), ip_regex);
+    auto ip_end   = std::sregex_iterator();
+    for (auto it = name_begin; it != name_end; ++it) {
+        // ips.push_back(it->str());
+    }
+   
+    RCLCPP_INFO(get_logger(), "Found %lu ips", ips.size());
+
+    if (prefixes.size() != ips.size()) {
+        RCLCPP_ERROR(get_logger(), "Names and IPs of robots do not match");
+        return hardware_interface::CallbackReturn::ERROR;
+    }
+
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+}
+
 hardware_interface::CallbackReturn
 HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
     RCLCPP_DEBUG(get_logger(), "calling on_configure()");
@@ -78,10 +112,6 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         arms.push_back(std::move(frk));
     }
     */
-
-    // Reading initial state
-    // update_state();
-    // bimanual_cmd = bimanual_state;
 
     // Controller state
     control_mode = ControlMode::INACTIVE;
@@ -280,10 +310,6 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
                     franka::kMaxJointAcceleration, franka::kMaxJointJerk, position_command.q,
                     arms[i].current_state.q_d, arms[i].current_state.dq_d, arms[i].current_state.ddq_d);
                 
-                RCLCPP_INFO(get_logger(), "%f %f %f %f %f %f %f ", 
-                    position_command.q[0], position_command.q[1], position_command.q[2], position_command.q[3],
-                    position_command.q[4], position_command.q[5], position_command.q[6]);
-
                 arms[i].control->writeOnce(position_command);
             } else if (control_mode == ControlMode::VELOCITY) {
                 std::copy(arms[i].if_cmds.qd.begin(), arms[i].if_cmds.qd.end(), joint_command.begin());
@@ -310,8 +336,8 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
     
     /*
     RCLCPP_INFO(get_logger(), "%f %f %f %f %f %f %f ", 
-        bimanual_cmd.q[0][0], bimanual_cmd.q[0][1], bimanual_cmd.q[0][2], bimanual_cmd.q[0][3],
-        bimanual_cmd.q[0][4], bimanual_cmd.q[0][5], bimanual_cmd.q[0][6]);
+        position_command.q[0], position_command.q[1], position_command.q[2], position_command.q[3],
+        position_command.q[4], position_command.q[5], position_command.q[6]);
     */
 
     return hardware_interface::return_type::OK;

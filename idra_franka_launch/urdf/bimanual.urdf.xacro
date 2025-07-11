@@ -196,8 +196,8 @@
 
       <xacro:if value="$(eval not use_fake_hardware and not gazebo)">
         <plugin>franka_bimanual_hardware_interface/FrankaBimanualHardwareInterface</plugin>
-        <param name="franka1_ip">$(arg franka1_ip)</param>
-        <param name="franka2_ip">$(arg franka2_ip)</param>
+        <param name="robot_names">franka1,franka2</param>
+        <param name="robot_ips">$(arg franka1_ip),$(arg franka2_ip)</param>
       </xacro:if>
     </hardware>
 

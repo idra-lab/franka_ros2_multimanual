@@ -73,11 +73,9 @@ public:
     HardwareInterface& operator=(const HardwareInterface&)  = delete;
     HardwareInterface& operator=(const HardwareInterface&&) = delete;
 
-    /*
     hardware_interface::CallbackReturn on_init (
         const hardware_interface::HardwareInfo &hardware_info
     ) override;
-    */
 
     hardware_interface::CallbackReturn on_configure(
         const rclcpp_lifecycle::State& prev_state
