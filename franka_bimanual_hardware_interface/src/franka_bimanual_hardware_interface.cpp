@@ -54,7 +54,7 @@ HardwareInterface::on_init (
     auto name_begin = std::sregex_iterator(name_list.begin(), name_list.end(), name_regex);
     auto name_end   = std::sregex_iterator();
     for (auto it = name_begin; it != name_end; ++it) {
-        // prefixes.push_back(it->str());
+        prefixes.push_back(it->str());
     }
 
     RCLCPP_INFO(get_logger(), "Found %lu robots", prefixes.size());
@@ -65,17 +65,29 @@ HardwareInterface::on_init (
     const std::string& ip_list = info.hardware_parameters.at("robot_ips");
     auto ip_begin = std::sregex_iterator(ip_list.begin(), ip_list.end(), ip_regex);
     auto ip_end   = std::sregex_iterator();
-    for (auto it = name_begin; it != name_end; ++it) {
-        // ips.push_back(it->str());
+    for (auto it = ip_begin; it != ip_end; ++it) {
+        ips.push_back(it->str());
     }
    
-    RCLCPP_INFO(get_logger(), "Found %lu ips", ips.size());
+    RCLCPP_INFO(get_logger(), "Found %lu IPs", ips.size());
 
     if (prefixes.size() != ips.size()) {
         RCLCPP_ERROR(get_logger(), "Names and IPs of robots do not match");
         return hardware_interface::CallbackReturn::ERROR;
     }
 
+    for ( long i = 0; i < ips.size(); ++i ) {
+        RobotUnit frk;
+
+        frk.name = prefixes[i];
+        frk.ip = ips[i];
+
+        arms.push_back(std::move(frk));
+
+        RCLCPP_INFO(get_logger(), "Done!");
+    }
+
+    RCLCPP_INFO(get_logger(), "Initialized %lu robots", arms.size());
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -89,29 +101,15 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    const std::string& franka1_ip = ips[0];
-    RCLCPP_INFO(get_logger(), "Connection with the first arm...");
-    // arms[0].arm = std::make_unique<Robot>(franka1_ip);
-    // arms[0].name = "franka1";
-    //setDefaultBehavior(arm_1)
-    RCLCPP_INFO(get_logger(), "Done!");
+    for ( long i = 0; i < arms.size(); ++i ) {
+        RCLCPP_INFO(get_logger(), "Connection with arm %s @ %s", 
+            arms[i].name.c_str(), arms[i].ip.c_str());
 
-    // Connection with second arm
-    const std::string& franka2_ip = ips[1];
-    RCLCPP_INFO(get_logger(), "Connection with the second arm...");
-    arms[0].arm = std::make_unique<Robot>(franka2_ip);
-    arms[0].name = "franka2";
-    RCLCPP_INFO(get_logger(), "Done!");
+        arms[i].arm = std::make_unique<Robot>(arms[i].ip);
+        //TODO? setDefaultBehavior(frk)
 
-    /*
-    for ( long i = 0; i < 2; ++i ) {
-        // Creates problem when different size of prefixes/ip, check
-        RobotUnit frk;
-        frk.arm = std::make_unique<Robot>(franka2_ip);
-        frk.name = "franka2";
-        arms.push_back(std::move(frk));
+        RCLCPP_INFO(get_logger(), "Done!");
     }
-    */
 
     // Controller state
     control_mode = ControlMode::INACTIVE;
@@ -236,9 +234,9 @@ HardwareInterface::export_state_interfaces() {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     std::string jnt_name = {};
 
-    state_interfaces.reserve(7 * 3 * 2);  // NOLINT: 7 joints * 3 states * 2 robots
+    state_interfaces.reserve(7 * 3 * prefixes.size());  // NOLINT: 7 joints * 3 states * n robots
 
-    for (long p = 0; p < prefixes.size(); ++p) {
+    for (long p = 0; p < arms.size(); ++p) {
         for (long i = 0; i < 7; ++i) {
             jnt_name = prefixes[p] + "_fr3_joint" + std::to_string(i+1);
             RCLCPP_INFO(get_logger(), "%s", jnt_name.c_str());
@@ -262,9 +260,9 @@ HardwareInterface::export_command_interfaces() {
     std::string jnt_name = {};
 
     // TODO: GPIO intefaces?
-    cmd_interfaces.reserve(7 * 3 * 2);  // NOLINT: 7 joints * 3 cmd interfaces * 2 robots
+    cmd_interfaces.reserve(7 * 3 * prefixes.size());  // NOLINT: 7 joints * 3 cmd interfaces * n robots
 
-    for (long p = 0; p < prefixes.size(); ++p) {
+    for (long p = 0; p < arms.size(); ++p) {
         for (long i = 0; i < 7; ++i) {
             jnt_name = prefixes[p] + "_fr3_joint" + std::to_string(i+1);
 

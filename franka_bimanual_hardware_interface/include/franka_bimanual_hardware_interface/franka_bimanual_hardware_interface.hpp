@@ -51,6 +51,7 @@ public:
         bool first_position_update = true;
 
         std::string name = "";
+        std::string ip   = "";
 
         FrankaPtr arm      = nullptr;
         ControlPtr control = nullptr;
@@ -124,9 +125,9 @@ public:
 private:
     rclcpp::Logger logger = rclcpp::get_logger("franka_bimanual_hardware_interface");
 
-    std::array<RobotUnit,1> arms; 
-    std::array<std::string, 2> prefixes = {"franka1",        "franka2"};
-    std::array<std::string, 2> ips      = {"192.160.100.11", "192.160.100.12"};
+    std::vector<RobotUnit> arms; 
+    std::vector<std::string> prefixes;
+    std::vector<std::string> ips;
 
     ControlMode control_mode   = ControlMode::INACTIVE;
     std::mutex control_mutex;    
