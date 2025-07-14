@@ -30,6 +30,10 @@
 #include "franka/robot.h"
 #include "franka/active_control_base.h"
 
+#include <thread>
+#include <pthread.h>
+#include <sched.h>
+
 namespace franka {
 
 class HardwareInterface : public hardware_interface::SystemInterface {
@@ -39,6 +43,7 @@ public:
     using FrankaPtr  = std::unique_ptr<Robot>;
     using StatePtr   = std::unique_ptr<RobotState>;
     using ControlPtr = std::unique_ptr<ActiveControlBase>;
+    // using ControlPtr = std::unique_ptr<std::thread>;
 
     enum class ControlMode {
         INACTIVE,
@@ -61,6 +66,7 @@ public:
         std::string ip   = "";
 
         FrankaPtr arm      = nullptr;
+        std::unique_ptr<std::thread> e_ctrl = nullptr;
         ControlPtr control = nullptr;
         ControlMode control_mode = ControlMode::INACTIVE;
     };

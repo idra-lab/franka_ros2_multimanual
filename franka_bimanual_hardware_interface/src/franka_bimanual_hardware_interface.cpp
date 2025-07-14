@@ -79,7 +79,30 @@ HardwareInterface::on_init (
 
         frk.name = name_it->str();
         frk.ip = ip_it->str();
+
         arms.push_back(std::move(frk));
+
+        /*arms[i].e_read = std::thread([this]() {
+            //set_realtime_priority(90);  // SCHED_FIFO
+
+            while (running_) {
+                try {
+                    auto state = robot_.readOnce();
+
+                    {
+                        // std::lock_guard<std::mutex> lock(control_mutex);
+                        arms[i].if_states.q   = arms[i].current_state.q;
+                        arms[i].if_states.qd  = arms[i].current_state.dq;
+                        arms[i].if_states.tau = arms[i].current_state.tau_J;
+                    }
+
+                    // Sleep if needed to avoid CPU saturation
+                    std::this_thread::sleep_for(std::chrono::microseconds(300));
+                } catch (const franka::Exception& e) {
+                    RCLCPP_ERROR(get_logger(), "FR3 read error: %s", e.what());
+                }
+            }
+        });*/
 
         ++name_it;
         ++ip_it;
@@ -290,7 +313,7 @@ HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& 
             return hardware_interface::return_type::ERROR;
         }
         auto inner_diff = std::chrono::duration_cast<std::chrono::microseconds> ( std::chrono::high_resolution_clock::now() - inner_start );
-        RCLCPP_INFO(get_logger(), "Read of %lu: %lu micros", i, inner_diff.count());
+        // RCLCPP_INFO(get_logger(), "Read of %lu: %lu micros", i, inner_diff.count());
     }
 
     auto diff = std::chrono::duration_cast<std::chrono::microseconds> ( std::chrono::high_resolution_clock::now() - start );
@@ -339,7 +362,7 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
                     franka::kMaxJointAcceleration, franka::kMaxJointJerk, 
                     velocity_command.dq, arm.current_state.dq_d, arm.current_state.ddq_d);
                 
-                arm.control->writeOnce(velocity_command);
+                // arm.control->writeOnce(velocity_command);
             } else if (arm.control_mode == ControlMode::EFFORT) {
                 std::copy(arm.if_cmds.tau.begin(), arm.if_cmds.tau.end(), joint_command.begin());
                 Torques torque_command = Torques(joint_command);
@@ -439,7 +462,38 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
        if(mode == ControlMode::POSITION) {
             robot.control = robot.arm->startJointPositionControl(research_interface::robot::Move::ControllerMode::kJointImpedance);
         } else if (mode == ControlMode::VELOCITY) {
-            robot.control = robot.arm->startJointVelocityControl(research_interface::robot::Move::ControllerMode::kJointImpedance);
+            const auto kJointVelocityControl = [this, &robot]() {
+                try{
+                    robot.arm->control(
+                    [this, &robot](const franka::RobotState& state, const franka::Duration& /*period*/) {
+                        {
+                            std::lock_guard<std::mutex> lock(control_mutex);
+                            robot.current_state = state;
+
+                            robot.if_states.q   = robot.current_state.q;
+                            robot.if_states.qd  = robot.current_state.dq;
+                            robot.if_states.tau = robot.current_state.tau_J;
+                        }
+                        // std::lock_guard<std::mutex> lock(write_mutex_);
+
+                        // std::copy(arm.if_cmds.qd.begin(), arm.if_cmds.qd.end(), joint_command.begin());
+                        JointVelocities out = JointVelocities(robot.if_cmds.qd);
+                        
+                        out.dq = franka::limitRate(
+                            franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
+                            franka::computeLowerLimitsJointVelocity(robot.current_state.q_d), 
+                            franka::kMaxJointAcceleration, franka::kMaxJointJerk, 
+                            out.dq, robot.current_state.dq_d, robot.current_state.ddq_d);
+
+                        return out;
+                    });
+                }
+                catch(franka::ControlException& e){
+                    RCLCPP_ERROR(get_logger(), "Exception %s: %s", robot.name.c_str(), e.what());
+                    // setError(true);
+                }
+            };
+            robot.e_ctrl = std::make_unique<std::thread>(kJointVelocityControl);
         } else if (mode == ControlMode::EFFORT) {
             robot.control = robot.arm->startTorqueControl();
         } else {
@@ -466,6 +520,7 @@ bool HardwareInterface::update_state(RobotUnit& robot) {
     // TOO SLOW
 
     try {
+        /*
         if (!robot.control) {
             robot.current_state = robot.arm->readOnce();
         } else {
@@ -475,6 +530,7 @@ bool HardwareInterface::update_state(RobotUnit& robot) {
         robot.if_states.q   = robot.current_state.q;
         robot.if_states.qd  = robot.current_state.dq;
         robot.if_states.tau = robot.current_state.tau_J;
+        */
 
         if (robot.first_position_update && robot.control_mode == ControlMode::POSITION) {
             RCLCPP_INFO(get_logger(), "First position initialized in arm %s", robot.name.c_str());
@@ -494,6 +550,7 @@ void HardwareInterface::reset_controllers() {
         arms[i].control_mode = ControlMode::INACTIVE;
         arms[i].control.reset(nullptr);
         arms[i].arm->stop();
+        arms[i].e_ctrl->join();
     }
 }
 
