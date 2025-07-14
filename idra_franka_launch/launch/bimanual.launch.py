@@ -294,7 +294,7 @@ def generate_launch_description():
 
         RegisterEventHandler(
             event_handler=OnProcessExit(
-                target_action=controller_left,
+                target_action=load_joint_state_broadcaster,
                 on_exit=[controller_right],
             )
         ),
