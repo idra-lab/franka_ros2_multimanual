@@ -6,13 +6,15 @@
 #include <fmt/format.h>
 #include <memory>
 #include <stdexcept>
-#include <regex>
+#include <regex>    
 
 #include <rclcpp/duration.hpp>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/logging.hpp"
-#include "franka/rate_limiting.h"
+
+#include <franka/control_tools.h>
+#include <franka/rate_limiting.h>
 
 /*
 INFO
@@ -97,18 +99,24 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         return hardware_interface::CallbackReturn::ERROR;
     }
 
+    franka::RealtimeConfig rt_config = franka::RealtimeConfig::kEnforce;
+    if (!franka::hasRealtimeKernel()) {
+        rt_config = franka::RealtimeConfig::kIgnore;
+        RCLCPP_WARN(get_logger(), "RT kernel is not in use");
+    }
+
     for ( long i = 0; i < arms.size(); ++i ) {
         RCLCPP_INFO(get_logger(), "Connection with arm %s @ %s", 
             arms[i].name.c_str(), arms[i].ip.c_str());
 
-        arms[i].arm = std::make_unique<Robot>(arms[i].ip);
+        arms[i].arm = std::make_unique<Robot>(arms[i].ip, rt_config);
         //TODO? setDefaultBehavior(frk)
+        
+        // Controller state
+        arms[i].control_mode = ControlMode::INACTIVE;
 
         RCLCPP_INFO(get_logger(), "Done!");
     }
-
-    // Controller state
-    control_mode = ControlMode::INACTIVE;
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -136,12 +144,8 @@ HardwareInterface::on_shutdown(const rclcpp_lifecycle::State& prev_state) {
 
     RCLCPP_INFO(get_logger(), "Shutting down arms...");
 
-    control_mode = ControlMode::INACTIVE;
     reset_controllers();
-    for (long i = 0; i < arms.size(); ++i) {
-        arms[i].arm->stop();
-    }
-
+    
     RCLCPP_INFO(get_logger(), "Done!");
 
     return hardware_interface::CallbackReturn::SUCCESS;
@@ -195,35 +199,15 @@ HardwareInterface::on_error(const rclcpp_lifecycle::State& prev_state) {
         arms[1].current_state.control_command_success_rate
     );
 
-    RCLCPP_INFO(get_logger(), "%s\n%s", 
+    RCLCPP_INFO(get_logger(), "E1: %s - %s", 
         std::string(arms[0].current_state.current_errors).c_str(), 
         std::string(arms[0].current_state.last_motion_errors).c_str()
     );
 
-    RCLCPP_INFO(get_logger(), "%s\n%s", 
+    RCLCPP_INFO(get_logger(), "E2: %s - %s", 
         std::string(arms[1].current_state.current_errors).c_str(), 
         std::string(arms[1].current_state.last_motion_errors).c_str()
     );
-    /*
-    reset_controllers();
-
-    RCLCPP_INFO(get_logger(), "Attempting automatic error recovery for both arms...");
-    try {
-        for (auto& arm_unit : arms) {
-            if (arm_unit.arm) {
-                arm_unit.arm->automaticErrorRecovery();
-            }
-        }
-        RCLCPP_INFO(get_logger(), "Recovery successful.");
-    } catch (const franka::Exception& e) {
-        RCLCPP_FATAL(get_logger(), "FATAL: Automatic error recovery failed: %s. Requires manual intervention.", e.what());
-        return hardware_interface::CallbackReturn::ERROR;
-    }
-
-    RCLCPP_INFO(get_logger(), "Trying reconfiguration...");
-    for (long i = 0; i < arms.size(); ++i) {
-        arms[i].control = setup_controller(arms[i].arm, control_mode);
-    }*/
 
     // After recovery, you are in an "Unconfigured" like state. The system
     // will need to be configured and activated again.
@@ -292,7 +276,10 @@ hardware_interface::return_type
 HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& /* period */) {
     auto start = std::chrono::high_resolution_clock::now();
     auto call_diff = std::chrono::duration_cast<std::chrono::microseconds> ( start - last_call );
-    // RCLCPP_INFO(get_logger(), "Last call diff: %lu micros", call_diff.count());
+
+    if (call_diff.count() > 1500) {
+        RCLCPP_INFO(get_logger(), "Last call diff: %lu micros", call_diff.count());
+    }
     last_call = start;
 
     std::lock_guard<std::mutex> lock(control_mutex);
@@ -303,7 +290,7 @@ HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& 
             return hardware_interface::return_type::ERROR;
         }
         auto inner_diff = std::chrono::duration_cast<std::chrono::microseconds> ( std::chrono::high_resolution_clock::now() - inner_start );
-        //RCLCPP_INFO(get_logger(), "Read of %lu: %lu micros", i, inner_diff.count());
+        RCLCPP_INFO(get_logger(), "Read of %lu: %lu micros", i, inner_diff.count());
     }
 
     auto diff = std::chrono::duration_cast<std::chrono::microseconds> ( std::chrono::high_resolution_clock::now() - start );
@@ -319,38 +306,48 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
 
     Vec7 joint_command{};
 
+    bool all_active = std::all_of(arms.begin(), arms.end(), [](const RobotUnit &item) {
+        return item.control && item.control_mode != ControlMode::INACTIVE;
+    });
+
+    bool all_loaded = std::all_of(arms.begin(), arms.end(), [](const RobotUnit &item) {
+        return item.control != nullptr;
+    });
+
+    // if(all_active)
     for (long i = 0; i < arms.size(); ++i) {
-        if (arms[i].control) {
-            if (control_mode == ControlMode::POSITION && !arms[i].first_position_update) {
-                std::copy(arms[i].if_cmds.q.begin(), arms[i].if_cmds.q.end(), joint_command.begin());
+        const RobotUnit& arm = arms[i];
+        if (arm.control_mode != ControlMode::INACTIVE) {
+            if (arm.control_mode == ControlMode::POSITION && !arms[i].first_position_update) {
+                std::copy(arm.if_cmds.q.begin(), arm.if_cmds.q.end(), joint_command.begin());
                 JointPositions position_command{joint_command};
-
+                /*
                 position_command.q = franka::limitRate(
-                    franka::computeUpperLimitsJointVelocity(arms[i].current_state.q_d),
-                    franka::computeLowerLimitsJointVelocity(arms[i].current_state.q_d),
+                    franka::computeUpperLimitsJointVelocity(arm.current_state.q_d),
+                    franka::computeLowerLimitsJointVelocity(arm.current_state.q_d),
                     franka::kMaxJointAcceleration, franka::kMaxJointJerk, position_command.q,
-                    arms[i].current_state.q_d, arms[i].current_state.dq_d, arms[i].current_state.ddq_d);
-                
-                arms[i].control->writeOnce(position_command);
-            } else if (control_mode == ControlMode::VELOCITY) {
-                std::copy(arms[i].if_cmds.qd.begin(), arms[i].if_cmds.qd.end(), joint_command.begin());
+                    arm.current_state.q_d, arm.current_state.dq_d, arm.current_state.ddq_d);
+                */
+                arm.control->writeOnce(position_command);
+            } else if (arm.control_mode == ControlMode::VELOCITY) {
+                std::copy(arm.if_cmds.qd.begin(), arm.if_cmds.qd.end(), joint_command.begin());
                 JointVelocities velocity_command = JointVelocities(joint_command);
-        
+                
                 velocity_command.dq = franka::limitRate(
-                    franka::computeUpperLimitsJointVelocity(arms[i].current_state.q_d),
-                    franka::computeLowerLimitsJointVelocity(arms[i].current_state.q_d), 
+                    franka::computeUpperLimitsJointVelocity(arm.current_state.q_d),
+                    franka::computeLowerLimitsJointVelocity(arm.current_state.q_d), 
                     franka::kMaxJointAcceleration, franka::kMaxJointJerk, 
-                    velocity_command.dq, arms[i].current_state.dq_d, arms[i].current_state.ddq_d);
-
-                arms[i].control->writeOnce(velocity_command);
-            } else if (control_mode == ControlMode::EFFORT) {
-                std::copy(arms[i].if_cmds.tau.begin(), arms[i].if_cmds.tau.end(), joint_command.begin());
+                    velocity_command.dq, arm.current_state.dq_d, arm.current_state.ddq_d);
+                
+                arm.control->writeOnce(velocity_command);
+            } else if (arm.control_mode == ControlMode::EFFORT) {
+                std::copy(arm.if_cmds.tau.begin(), arm.if_cmds.tau.end(), joint_command.begin());
                 Torques torque_command = Torques(joint_command);
-
+                /*
                 torque_command.tau_J =
-                    franka::limitRate(franka::kMaxTorqueRate, torque_command.tau_J, arms[i].current_state.tau_J_d);
-
-                arms[i].control->writeOnce(torque_command);
+                    franka::limitRate(franka::kMaxTorqueRate, torque_command.tau_J, arm.current_state.tau_J_d);
+                */
+                arm.control->writeOnce(torque_command);
             }
         }
     }
@@ -375,9 +372,11 @@ HardwareInterface::perform_command_mode_switch(
         const std::vector<std::string>& start_interfaces,
         const std::vector<std::string>& /* stop_interfaces */
 ) {
+    auto start = std::chrono::high_resolution_clock::now();
+
     ControlMode temp_control_mode = ControlMode::INACTIVE;
 
-    // std::lock_guard<std::mutex> lock(control_mutex);
+    std::lock_guard<std::mutex> lock(control_mutex);
 
     RCLCPP_INFO(get_logger(), "Switching command mode...");
     
@@ -391,10 +390,6 @@ HardwareInterface::perform_command_mode_switch(
     else who_triggered = -1;
 
     RCLCPP_INFO(get_logger(), "Triggered interface switch %s by %d", iface.c_str(), who_triggered);
-
-    control_mode = ControlMode::INACTIVE;
-    arms[who_triggered].arm->stop();
-    arms[who_triggered].control.reset(nullptr);
 
     if (iface.find("position") != std::string::npos) {
         RCLCPP_INFO(get_logger(), "Starting interface position...");
@@ -412,16 +407,22 @@ HardwareInterface::perform_command_mode_switch(
         temp_control_mode = ControlMode::EFFORT;   
         std::fill(arms[who_triggered].if_cmds.tau.begin(), arms[who_triggered].if_cmds.tau.end(), 0);
     } else {
-        control_mode = ControlMode::INACTIVE;
         RCLCPP_ERROR(get_logger(), "Unsupported command interface: %s", iface.c_str());
         return hardware_interface::return_type::ERROR;
     }
 
+    arms[who_triggered].control_mode = ControlMode::INACTIVE;
+    arms[who_triggered].arm->stop();
+    arms[who_triggered].control.reset(nullptr);
+
     setup_controller(arms[who_triggered], temp_control_mode);
 
-    control_mode = temp_control_mode;
+    arms[who_triggered].control_mode = temp_control_mode;
 
     RCLCPP_INFO(get_logger(), "Setup complete");
+
+    auto diff = std::chrono::duration_cast<std::chrono::microseconds> ( std::chrono::high_resolution_clock::now() - start );
+    RCLCPP_INFO(get_logger(), "PCS %lu", diff.count());
 
     return hardware_interface::return_type::OK;
 }
@@ -465,17 +466,17 @@ bool HardwareInterface::update_state(RobotUnit& robot) {
     // TOO SLOW
 
     try {
-        if (!robot.control || control_mode == ControlMode::INACTIVE) {
+        if (!robot.control) {
             robot.current_state = robot.arm->readOnce();
         } else {
             std::tie(robot.current_state, std::ignore) = robot.control->readOnce(); 
         }
-
+        
         robot.if_states.q   = robot.current_state.q;
         robot.if_states.qd  = robot.current_state.dq;
         robot.if_states.tau = robot.current_state.tau_J;
 
-        if (robot.first_position_update && control_mode == ControlMode::POSITION) {
+        if (robot.first_position_update && robot.control_mode == ControlMode::POSITION) {
             RCLCPP_INFO(get_logger(), "First position initialized in arm %s", robot.name.c_str());
             std::copy(robot.if_states.q.begin(), robot.if_states.q.end(), robot.if_cmds.q.begin());
             robot.first_position_update = false;
@@ -490,8 +491,9 @@ bool HardwareInterface::update_state(RobotUnit& robot) {
 
 void HardwareInterface::reset_controllers() {
     for (long i = 0; i < arms.size(); ++i) {
-        // arms[i].arm->stop();
+        arms[i].control_mode = ControlMode::INACTIVE;
         arms[i].control.reset(nullptr);
+        arms[i].arm->stop();
     }
 }
 

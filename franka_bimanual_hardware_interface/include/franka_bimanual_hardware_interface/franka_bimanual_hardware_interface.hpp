@@ -40,6 +40,13 @@ public:
     using StatePtr   = std::unique_ptr<RobotState>;
     using ControlPtr = std::unique_ptr<ActiveControlBase>;
 
+    enum class ControlMode {
+        INACTIVE,
+        POSITION,
+        VELOCITY,
+        EFFORT
+    };
+
     struct RobotUnit {
         struct { 
             Vec7 q;
@@ -55,13 +62,7 @@ public:
 
         FrankaPtr arm      = nullptr;
         ControlPtr control = nullptr;
-    };
-
-    enum class ControlMode {
-        INACTIVE,
-        POSITION,
-        VELOCITY,
-        EFFORT
+        ControlMode control_mode = ControlMode::INACTIVE;
     };
 
     RCLCPP_SHARED_PTR_DEFINITIONS(HardwareInterface)
@@ -127,7 +128,6 @@ private:
 
     std::vector<RobotUnit> arms; 
 
-    ControlMode control_mode = ControlMode::INACTIVE;
     std::mutex control_mutex;
     // std::array<std::mutex, 2> control_mutex;    
 
@@ -135,7 +135,7 @@ private:
 
     bool update_state(RobotUnit& robot);
     void setup_controller(RobotUnit& robot, ControlMode mode);
-    void reset_controllers();
+    void reset_controllers();   
 };
 
 }

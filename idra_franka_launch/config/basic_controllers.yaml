@@ -1,5 +1,6 @@
 controller_manager:
   ros__parameters:
+    thread_priority: 90
     update_rate: 1000  # Hz
   
     joint_position_controller_left:
