@@ -42,8 +42,8 @@ public:
     using Vec14      = std::array<double, 14>;
     using FrankaPtr  = std::unique_ptr<Robot>;
     using StatePtr   = std::unique_ptr<RobotState>;
-    using ControlPtr = std::unique_ptr<ActiveControlBase>;
-    // using ControlPtr = std::unique_ptr<std::thread>;
+    // using ControlPtr = std::unique_ptr<ActiveControlBase>;
+    using ControlPtr = std::unique_ptr<std::thread>;
 
     enum class ControlMode {
         INACTIVE,
@@ -65,8 +65,9 @@ public:
         std::string name = "";
         std::string ip   = "";
 
+        std::unique_ptr<std::mutex> control_mutex = std::make_unique<std::mutex>();
+
         FrankaPtr arm      = nullptr;
-        std::unique_ptr<std::thread> e_ctrl = nullptr;
         ControlPtr control = nullptr;
         ControlMode control_mode = ControlMode::INACTIVE;
     };
@@ -134,12 +135,6 @@ private:
 
     std::vector<RobotUnit> arms; 
 
-    std::mutex control_mutex;
-    // std::array<std::mutex, 2> control_mutex;    
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> last_call;
-
-    bool update_state(RobotUnit& robot);
     void setup_controller(RobotUnit& robot, ControlMode mode);
     void reset_controllers();   
 };
