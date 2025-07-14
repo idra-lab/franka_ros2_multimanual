@@ -9,6 +9,7 @@ from launch.actions import (
     IncludeLaunchDescription,
     OpaqueFunction,
     RegisterEventHandler,
+    TimerAction,
     LogInfo,
     Shutdown
 )
@@ -179,14 +180,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_effort_controller_left', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_controller_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_effort_controller_right', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_controller_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -255,36 +256,6 @@ def generate_launch_description():
 
         robot_description_dependent_nodes_spawner_opaque_function,
 
-        # Node(
-        #     package='controller_manager',
-        #     executable='spawner',
-        #     arguments=['franka_robot_state_broadcaster'],
-        #     parameters=[{'arm_id': 'fr3'}],
-        #     output='screen',
-        #     condition=UnlessCondition(use_fake_hardware),
-        # ),
-        # Node(
-        #     package='controller_manager',
-        #     executable='spawner',
-        #     arguments=['motion_control_handle'],
-        #     output='screen',
-        #     condition=UnlessCondition(use_fake_hardware),
-        # ),
-        # Node(
-        #     package='controller_manager',
-        #     executable='spawner',
-        #     arguments=['cartesian_impedance_controller'],
-        #     output='screen',
-        #     condition=UnlessCondition(use_fake_hardware),
-        # ),
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource([PathJoinSubstitution(
-        #         [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py'])]),
-        #     launch_arguments={robot_ip_parameter_name: robot_ip,
-        #                       use_fake_hardware_parameter_name: use_fake_hardware}.items(),
-        #     condition=IfCondition(load_gripper)
-        # ),
-
         # Launch Gazebo
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -307,7 +278,12 @@ def generate_launch_description():
         spawn,
 
         # Controllers
-        load_joint_state_broadcaster,
+        TimerAction(
+            period=2.0,
+            actions=[
+                load_joint_state_broadcaster
+            ]
+        ),
 
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -322,17 +298,6 @@ def generate_launch_description():
                 on_exit=[controller_right],
             )
         ),
-
-        # Node(
-        #     package='joint_state_publisher',
-        #     executable='joint_state_publisher',
-        #     name='joint_state_publisher',
-        #     parameters=[{
-        #         'source_list': ['franka/joint_states', 'franka_gripper/joint_states'],
-        #         'rate': 30
-        #     }],
-        #     condition = UnlessCondition(use_gazebo)
-        # ), 
 
         on_shutdown
     ])

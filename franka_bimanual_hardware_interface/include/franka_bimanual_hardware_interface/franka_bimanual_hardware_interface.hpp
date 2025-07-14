@@ -127,8 +127,11 @@ private:
 
     std::vector<RobotUnit> arms; 
 
-    ControlMode control_mode   = ControlMode::INACTIVE;
-    std::mutex control_mutex;    
+    ControlMode control_mode = ControlMode::INACTIVE;
+    std::mutex control_mutex;
+    // std::array<std::mutex, 2> control_mutex;    
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> last_call;
 
     bool update_state(RobotUnit& robot);
     void setup_controller(RobotUnit& robot, ControlMode mode);

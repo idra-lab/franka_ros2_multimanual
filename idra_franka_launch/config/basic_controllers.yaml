@@ -8,6 +8,9 @@ controller_manager:
     joint_position_controller_right:
       type: position_controllers/JointGroupPositionController
 
+    joint_velocity_controller_all:
+      type: velocity_controllers/JointGroupVelocityController
+
     joint_velocity_controller_left:
       type: velocity_controllers/JointGroupVelocityController
 
@@ -44,6 +47,24 @@ joint_position_controller_right:
       - franka1_fr3_joint5
       - franka1_fr3_joint6
       - franka1_fr3_joint7
+
+joint_velocity_controller_all:
+  ros__parameters:
+    joints:
+      - franka1_fr3_joint1
+      - franka1_fr3_joint2
+      - franka1_fr3_joint3
+      - franka1_fr3_joint4
+      - franka1_fr3_joint5
+      - franka1_fr3_joint6
+      - franka1_fr3_joint7
+      - franka2_fr3_joint1
+      - franka2_fr3_joint2
+      - franka2_fr3_joint3
+      - franka2_fr3_joint4
+      - franka2_fr3_joint5
+      - franka2_fr3_joint6
+      - franka2_fr3_joint7
 
 joint_velocity_controller_left:
   ros__parameters:

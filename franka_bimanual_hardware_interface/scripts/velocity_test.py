@@ -46,7 +46,7 @@ class VelocityPublisher(Node):
         velocity = self.amplitude * math.sin(2 * math.pi * self.frequency * elapsed_time)
 
         msg = Float64MultiArray()
-        msg.data = [0.0, 0.0, 0.0, 0.0, velocity, 0.0, 0.0]
+        msg.data = [velocity, velocity, velocity, velocity, velocity, velocity, velocity ]
         self.publisher_left.publish(msg)
         self.publisher_right.publish(msg)
         self.get_logger().info(f'Sent: "{msg.data}"')
