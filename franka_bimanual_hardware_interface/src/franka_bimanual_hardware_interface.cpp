@@ -145,7 +145,9 @@ HardwareInterface::on_shutdown(const rclcpp_lifecycle::State& prev_state) {
 
     RCLCPP_INFO(get_logger(), "Shutting down arms...");
 
-    reset_controllers();
+    for (auto& robot : arms) {
+        reset_controller(robot);
+    }
     
     RCLCPP_INFO(get_logger(), "Done!");
 
@@ -305,48 +307,36 @@ HardwareInterface::perform_command_mode_switch(
         const std::vector<std::string>& start_interfaces,
         const std::vector<std::string>& /* stop_interfaces */
 ) {
-    ControlMode temp_control_mode = ControlMode::INACTIVE;
-
-    RCLCPP_INFO(get_logger(), "Switching command mode...");
-
-    std::string iface = start_interfaces[0];
-
-    int who_triggered;
-    if ( iface.find("franka1") != std::string::npos) who_triggered = 0;
-    else if ( iface.find("franka2") != std::string::npos) who_triggered = 1;
-    else who_triggered = -1;
-
-    RCLCPP_INFO(get_logger(), "Triggered interface switch %s by %d", iface.c_str(), who_triggered);
-
-    if (iface.find("position") != std::string::npos) {
-        RCLCPP_INFO(get_logger(), "Starting interface position...");
-
-        temp_control_mode = ControlMode::POSITION;
-        arms[who_triggered].first_position_update = true;
-    } else if (iface.find("velocity") != std::string::npos) {
-        RCLCPP_INFO(get_logger(), "Starting interface velocity...");
-
-        temp_control_mode = ControlMode::VELOCITY;
-        std::fill(arms[who_triggered].if_cmds.qd.begin(), arms[who_triggered].if_cmds.qd.end(), 0);
-    } else if (iface.find("effort") != std::string::npos) {
-        RCLCPP_INFO(get_logger(), "Starting interface effort...");
-        
-        temp_control_mode = ControlMode::EFFORT;   
-        std::fill(arms[who_triggered].if_cmds.tau.begin(), arms[who_triggered].if_cmds.tau.end(), 0);
-    } else {
-        RCLCPP_ERROR(get_logger(), "Unsupported command interface: %s", iface.c_str());
+    std::vector<std::pair<long, ControlMode>> changes;
+    if ( who_and_what_switched(start_interfaces, changes) == hardware_interface::return_type::ERROR ) {
         return hardware_interface::return_type::ERROR;
     }
 
-    arms[who_triggered].control_mode = ControlMode::INACTIVE;
-    arms[who_triggered].arm->stop();
-    arms[who_triggered].control.reset(nullptr);
+    for (const auto& change : changes) {
+        RCLCPP_INFO(get_logger(), "%s will switch to %s interface", 
+            arms[change.first].name.c_str(), control_to_string(change.second).c_str()
+        );
 
-    setup_controller(arms[who_triggered], temp_control_mode);
+        if (change.second == ControlMode::POSITION) {
+            RCLCPP_INFO(get_logger(), "Starting interface position...");
+            arms[change.first].first_position_update = true;
+        } else if (change.second == ControlMode::VELOCITY) {
+            RCLCPP_INFO(get_logger(), "Starting interface velocity...");
+            std::fill(arms[change.first].if_cmds.qd.begin(), arms[change.first].if_cmds.qd.end(), 0);
+        } else if (change.second == ControlMode::EFFORT) {
+            RCLCPP_INFO(get_logger(), "Starting interface effort...");
+            std::fill(arms[change.first].if_cmds.tau.begin(), arms[change.first].if_cmds.tau.end(), 0);
+        } 
 
-    arms[who_triggered].control_mode = temp_control_mode;
+        reset_controller(arms[change.first]);
+        setup_controller(arms[change.first], change.second);
 
-    RCLCPP_INFO(get_logger(), "Setup complete");
+        arms[change.first].control_mode = change.second;
+
+        RCLCPP_INFO(get_logger(), "%s correctly completed the switch", 
+            arms[change.first].name.c_str()
+        );
+    }
 
     return hardware_interface::return_type::OK;
 }
@@ -357,8 +347,7 @@ HardwareInterface::perform_command_mode_switch(
 // |  __/| |  | |\ V / (_| | ||  __/
 // |_|   |_|  |_| \_/ \__,_|\__\___|
 //
-std::vector<std::pair<long, HardwareInterface::ControlMode>> HardwareInterface::who_and_what_switched(const std::vector<std::string>& interfaces) {
-    std::vector<std::pair<long, ControlMode>> changes;
+hardware_interface::return_type HardwareInterface::who_and_what_switched(const std::vector<std::string>& interfaces, std::vector<std::pair<long, ControlMode>>& changes) {
 
     for (const std::string& iface : interfaces) {
         long who = -1;
@@ -368,43 +357,45 @@ std::vector<std::pair<long, HardwareInterface::ControlMode>> HardwareInterface::
             if (iface.find(arms[i].name) != std::string::npos) {
                 who = i;
             }
-
-            RCLCPP_WARN(get_logger(), "It was tried to activate an unkwnon robot, skipping");
         }
 
-        if (who >= 0) {
-            if (iface.find("position") != std::string::npos) {
-                what = ControlMode::POSITION;
-            } else if (iface.find("velocity") != std::string::npos) {
-                what = ControlMode::VELOCITY;
-            } else if (iface.find("effort") != std::string::npos) {
-                what = ControlMode::EFFORT;
-            } else {
-                RCLCPP_WARN(get_logger(), "%s tried to activate an unsupported interface, skipping", 
-                    arms[who].name.c_str()
-                );
-            }
+        if (who < 0) {
+            RCLCPP_ERROR(get_logger(), "An unknown robot tried to activate an interface");
+            return hardware_interface::return_type::ERROR;
+        }
 
-            if (what != ControlMode::INACTIVE) {
-                auto possible_switch = std::pair(who, what);
+        if (iface.find("position") != std::string::npos) {
+            what = ControlMode::POSITION;
+        } else if (iface.find("velocity") != std::string::npos) {
+            what = ControlMode::VELOCITY;
+        } else if (iface.find("effort") != std::string::npos) {
+            what = ControlMode::EFFORT;
+        } else {
+            RCLCPP_ERROR(get_logger(), "%s tried to activate an unsupported interface", 
+                arms[who].name.c_str()
+            );
+            return hardware_interface::return_type::ERROR; 
+        }
 
-                bool already_in = false;
-                for (const auto& change : changes) {
-                    if (change.first == who) {
-                        already_in = true;
-                        // if (change.second != ){}
-                    }
+        bool already_in = false;
+        for (const auto& change : changes) {
+            if (change.first == who) {
+                already_in = true;
+                if (change.second != what) {
+                    RCLCPP_ERROR(get_logger(), "%s tried to activate %s interface, but it has already activated %s", 
+                        arms[who].name.c_str(), control_to_string(what).c_str(), control_to_string(change.second).c_str()
+                    );
+                    return hardware_interface::return_type::ERROR;   
                 }
-                // TODO, check if exists already the robot inside; 
-                // if no add, if yes: check if already there is the same interface: if yes skip, if no raise error
-                if (!already_in) {
-                    changes.push_back(possible_switch);
-                }                
             }
         }
+        
+        if (!already_in) {
+            changes.push_back(std::pair(who, what));
+        } 
     }
 
-    return changes;
+    return hardware_interface::return_type::OK;
 }
 
 void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
@@ -528,16 +519,29 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
 
 }
 
-void HardwareInterface::reset_controllers() {
-    for (long i = 0; i < arms.size(); ++i) {
-        arms[i].control_mode = ControlMode::INACTIVE;
-        arms[i].arm->stop();
+void HardwareInterface::reset_controller(RobotUnit& robot) {
+    robot.control_mode = ControlMode::INACTIVE;
+    robot.arm->stop();
 
-        if (arms[i].control) {
-            // There is a loaded control
-            arms[i].control->join();
-            arms[i].control.reset(nullptr);
-        }
+    // There is a loaded control
+    if (robot.control) {
+        robot.control->join();
+        robot.control.reset(nullptr);
+    }
+}
+
+std::string HardwareInterface::control_to_string(const ControlMode& mode) {
+    switch(mode) { 
+        case ControlMode::INACTIVE:
+        return "inactive";
+        case ControlMode::POSITION:
+        return "position";
+        case ControlMode::VELOCITY:
+        return "velocity";
+        case ControlMode::EFFORT:
+        return "effort";
+        default:
+        return "???";
     }
 }
 

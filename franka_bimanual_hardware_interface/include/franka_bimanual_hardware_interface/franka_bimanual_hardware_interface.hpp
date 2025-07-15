@@ -129,15 +129,19 @@ public:
 
     
     rclcpp::Logger& get_logger() { return logger; }
+    std::string control_to_string(const ControlMode& mode);
 
 private:
     rclcpp::Logger logger = rclcpp::get_logger("franka_bimanual_hardware_interface");
 
     std::vector<RobotUnit> arms; 
 
-    std::vector<std::pair<long, ControlMode>>  who_and_what_switched(const std::vector<std::string>& interfaces);
+    hardware_interface::return_type who_and_what_switched(
+        const std::vector<std::string>& interfaces,
+        std::vector<std::pair<long, ControlMode>>& changes
+    );
     void setup_controller(RobotUnit& robot, ControlMode mode);
-    void reset_controllers();   
+    void reset_controller(RobotUnit& robot);   
 };
 
 }
