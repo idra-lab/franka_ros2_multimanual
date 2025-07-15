@@ -135,6 +135,7 @@ private:
 
     std::vector<RobotUnit> arms; 
 
+    std::vector<std::pair<long, ControlMode>>  who_and_what_switched(const std::vector<std::string>& interfaces);
     void setup_controller(RobotUnit& robot, ControlMode mode);
     void reset_controllers();   
 };

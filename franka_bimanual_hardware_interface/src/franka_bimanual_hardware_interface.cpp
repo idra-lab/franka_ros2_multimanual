@@ -295,6 +295,8 @@ hardware_interface::return_type
 HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration& period ) {
     // EMPTY. DONE DIRECTLY IN THE CONTROL SECTION
 
+    //Copiare i comandi, bridge coperto da mutex e quello scritto dal robot libero
+
     return hardware_interface::return_type::OK;
 }
 
@@ -303,8 +305,6 @@ HardwareInterface::perform_command_mode_switch(
         const std::vector<std::string>& start_interfaces,
         const std::vector<std::string>& /* stop_interfaces */
 ) {
-    auto start = std::chrono::high_resolution_clock::now();
-
     ControlMode temp_control_mode = ControlMode::INACTIVE;
 
     RCLCPP_INFO(get_logger(), "Switching command mode...");
@@ -348,9 +348,6 @@ HardwareInterface::perform_command_mode_switch(
 
     RCLCPP_INFO(get_logger(), "Setup complete");
 
-    auto diff = std::chrono::duration_cast<std::chrono::microseconds> ( std::chrono::high_resolution_clock::now() - start );
-    RCLCPP_INFO(get_logger(), "PCS %lu", diff.count());
-
     return hardware_interface::return_type::OK;
 }
 
@@ -360,6 +357,56 @@ HardwareInterface::perform_command_mode_switch(
 // |  __/| |  | |\ V / (_| | ||  __/
 // |_|   |_|  |_| \_/ \__,_|\__\___|
 //
+std::vector<std::pair<long, HardwareInterface::ControlMode>> HardwareInterface::who_and_what_switched(const std::vector<std::string>& interfaces) {
+    std::vector<std::pair<long, ControlMode>> changes;
+
+    for (const std::string& iface : interfaces) {
+        long who = -1;
+        ControlMode what = ControlMode::INACTIVE;
+
+        for (long i = 0; i < arms.size(); ++i) {
+            if (iface.find(arms[i].name) != std::string::npos) {
+                who = i;
+            }
+
+            RCLCPP_WARN(get_logger(), "It was tried to activate an unkwnon robot, skipping");
+        }
+
+        if (who >= 0) {
+            if (iface.find("position") != std::string::npos) {
+                what = ControlMode::POSITION;
+            } else if (iface.find("velocity") != std::string::npos) {
+                what = ControlMode::VELOCITY;
+            } else if (iface.find("effort") != std::string::npos) {
+                what = ControlMode::EFFORT;
+            } else {
+                RCLCPP_WARN(get_logger(), "%s tried to activate an unsupported interface, skipping", 
+                    arms[who].name.c_str()
+                );
+            }
+
+            if (what != ControlMode::INACTIVE) {
+                auto possible_switch = std::pair(who, what);
+
+                bool already_in = false;
+                for (const auto& change : changes) {
+                    if (change.first == who) {
+                        already_in = true;
+                        // if (change.second != ){}
+                    }
+                }
+                // TODO, check if exists already the robot inside; 
+                // if no add, if yes: check if already there is the same interface: if yes skip, if no raise error
+                if (!already_in) {
+                    changes.push_back(possible_switch);
+                }                
+            }
+        }
+    }
+
+    return changes;
+}
+
 void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
     const auto jointPositionControl = [this, &robot]() {
         try{
@@ -485,7 +532,7 @@ void HardwareInterface::reset_controllers() {
     for (long i = 0; i < arms.size(); ++i) {
         arms[i].control_mode = ControlMode::INACTIVE;
         arms[i].arm->stop();
-        
+
         if (arms[i].control) {
             // There is a loaded control
             arms[i].control->join();
