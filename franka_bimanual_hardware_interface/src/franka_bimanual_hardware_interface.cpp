@@ -302,40 +302,89 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
     return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type
-HardwareInterface::perform_command_mode_switch(
-        const std::vector<std::string>& start_interfaces,
-        const std::vector<std::string>& /* stop_interfaces */
+hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
+    const std::vector<std::string>& start_interfaces,
+    const std::vector<std::string>& stop_interfaces
 ) {
-    std::vector<std::pair<long, ControlMode>> changes;
-    if ( who_and_what_switched(start_interfaces, changes) == hardware_interface::return_type::ERROR ) {
+    mode_switch_plan.activations.clear();
+    mode_switch_plan.deactivations.clear();
+
+    if (who_and_what_switched(stop_interfaces, mode_switch_plan.deactivations) == hardware_interface::return_type::ERROR) {
         return hardware_interface::return_type::ERROR;
     }
 
-    for (const auto& change : changes) {
-        RCLCPP_INFO(get_logger(), "%s will switch to %s interface", 
-            arms[change.first].name.c_str(), control_to_string(change.second).c_str()
+    if (who_and_what_switched(start_interfaces, mode_switch_plan.activations) == hardware_interface::return_type::ERROR) {
+        return hardware_interface::return_type::ERROR;
+    }
+
+    // Lambda to check if an arm is being deactivated
+    const auto is_being_deactivated = [&](long arm_index) -> bool {
+        return std::any_of(
+            mode_switch_plan.deactivations.begin(),
+            mode_switch_plan.deactivations.end(),
+            [&](const auto& item) { return item.first == arm_index; }
+        );
+    };
+
+    // Check for conflicts
+    for (const auto& change : mode_switch_plan.activations) {
+        const RobotUnit& arm = arms[change.first];
+
+        if (arm.control_mode != ControlMode::INACTIVE && !is_being_deactivated(change.first)) {
+            RCLCPP_ERROR(get_logger(), "%s already has an active interface %s, that is not planned to be deactivated",
+                arm.name.c_str(), control_to_string(arm.control_mode).c_str()
+            );
+
+            return hardware_interface::return_type::ERROR;
+        }
+    }
+
+    return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type
+HardwareInterface::perform_command_mode_switch(
+        const std::vector<std::string>& start_interfaces,
+        const std::vector<std::string>& stop_interfaces
+) {
+    for (const auto& change : mode_switch_plan.deactivations) {
+        RobotUnit& arm = arms[change.first];
+
+        RCLCPP_INFO(get_logger(), "%s will shut down interface %s", 
+            arm.name.c_str(), control_to_string(change.second).c_str()
+        );
+
+        reset_controller(arm);
+
+        RCLCPP_INFO(get_logger(), "%s correctly shutted down the interface", 
+            arm.name.c_str()
+        );
+    }
+
+    for (const auto& change : mode_switch_plan.activations) {
+        RobotUnit& arm = arms[change.first];
+
+        RCLCPP_INFO(get_logger(), "%s will activate %s interface", 
+            arm.name.c_str(), control_to_string(change.second).c_str()
         );
 
         if (change.second == ControlMode::POSITION) {
-            RCLCPP_INFO(get_logger(), "Starting interface position...");
-            arms[change.first].first_position_update = true;
+            arm.first_position_update = true;
         } else if (change.second == ControlMode::VELOCITY) {
-            RCLCPP_INFO(get_logger(), "Starting interface velocity...");
-            std::fill(arms[change.first].if_cmds.qd.begin(), arms[change.first].if_cmds.qd.end(), 0);
+            std::fill(arm.if_cmds.qd.begin(), arm.if_cmds.qd.end(), 0);
         } else if (change.second == ControlMode::EFFORT) {
-            RCLCPP_INFO(get_logger(), "Starting interface effort...");
-            std::fill(arms[change.first].if_cmds.tau.begin(), arms[change.first].if_cmds.tau.end(), 0);
+            std::fill(arm.if_cmds.tau.begin(), arm.if_cmds.tau.end(), 0);
         } 
 
-        reset_controller(arms[change.first]);
-        setup_controller(arms[change.first], change.second);
+        reset_controller(arm);
+        setup_controller(arm, change.second);
 
-        arms[change.first].control_mode = change.second;
+        arm.control_mode = change.second;
 
-        RCLCPP_INFO(get_logger(), "%s correctly completed the switch", 
-            arms[change.first].name.c_str()
+        RCLCPP_INFO(get_logger(), "%s correctly activated the interface", 
+            arm.name.c_str()
         );
+
     }
 
     return hardware_interface::return_type::OK;

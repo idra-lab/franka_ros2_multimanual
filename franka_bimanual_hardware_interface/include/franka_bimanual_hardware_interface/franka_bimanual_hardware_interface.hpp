@@ -52,6 +52,11 @@ public:
         EFFORT
     };
 
+    struct ModeSwitchPlan {
+        std::vector<std::pair<long, ControlMode>> activations;
+        std::vector<std::pair<long, ControlMode>> deactivations;
+    };
+
     struct RobotUnit {
         struct { 
             Vec7 q;
@@ -122,12 +127,16 @@ public:
         const rclcpp::Time& time, const rclcpp::Duration& period
     ) override;
 
+    hardware_interface::return_type prepare_command_mode_switch(
+        const std::vector<std::string>& start_interfaces,
+        const std::vector<std::string>& stop_interfaces
+    ) override;
+
     hardware_interface::return_type perform_command_mode_switch(
         const std::vector<std::string>& start_interfaces,
         const std::vector<std::string>& stop_interfaces
     ) override;
 
-    
     rclcpp::Logger& get_logger() { return logger; }
     std::string control_to_string(const ControlMode& mode);
 
@@ -135,6 +144,7 @@ private:
     rclcpp::Logger logger = rclcpp::get_logger("franka_bimanual_hardware_interface");
 
     std::vector<RobotUnit> arms; 
+    ModeSwitchPlan mode_switch_plan;  
 
     hardware_interface::return_type who_and_what_switched(
         const std::vector<std::string>& interfaces,
