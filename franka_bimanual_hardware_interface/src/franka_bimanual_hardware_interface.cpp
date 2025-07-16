@@ -192,7 +192,7 @@ HardwareInterface::on_deactivate(const rclcpp_lifecycle::State& prev_state) {
  */
 hardware_interface::CallbackReturn
 HardwareInterface::on_error(const rclcpp_lifecycle::State& prev_state) {
-    RCLCPP_INFO(get_logger(), "Handling error in on_error()");
+    RCLCPP_DEBUG(get_logger(), "calling on_error()");
     if (hardware_interface::SystemInterface::on_error(prev_state)
         != hardware_interface::CallbackReturn::SUCCESS) {
         RCLCPP_ERROR(get_logger(), "parent on_error() failed");
