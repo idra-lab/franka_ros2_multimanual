@@ -108,6 +108,8 @@
   <xacro:arg name="multi_arm" default="true" />
   <xacro:arg name="special_connection" default='' />
 
+  <xacro:arg name="limit_override" default="false" />
+
   <xacro:arg name="franka1_ip" default="192.160.100.11" />
   <xacro:arg name="franka2_ip" default="192.160.100.12" />
 
@@ -199,6 +201,7 @@
         <plugin>franka_bimanual_hardware_interface/FrankaBimanualHardwareInterface</plugin>
         <param name="robot_names">franka1,franka2</param>
         <param name="robot_ips">$(arg franka1_ip),$(arg franka2_ip)</param>
+        <param name="limit_override">$(arg limit_override)</param>
       </xacro:if>
     </hardware>
 

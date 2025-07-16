@@ -88,6 +88,9 @@ HardwareInterface::on_init (
 
     RCLCPP_INFO(get_logger(), "Initialized %lu robots", arms.size());
 
+    limit_override = info.hardware_parameters.at("limit_override") == "true";
+    RCLCPP_INFO(get_logger(), "franka::limitRate will %sbe used", !limit_override ? "" : "not ");
+
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -470,12 +473,13 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
 
                 JointPositions out = JointPositions(robot.if_cmds.q);
                 
-                out.q = franka::limitRate(
-                    franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
-                    franka::computeLowerLimitsJointVelocity(robot.current_state.q_d),
-                    franka::kMaxJointAcceleration, franka::kMaxJointJerk, out.q,
-                    robot.current_state.q_d, robot.current_state.dq_d, robot.current_state.ddq_d);
-
+                if (!limit_override) {
+                    out.q = franka::limitRate(
+                        franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
+                        franka::computeLowerLimitsJointVelocity(robot.current_state.q_d),
+                        franka::kMaxJointAcceleration, franka::kMaxJointJerk, out.q,
+                        robot.current_state.q_d, robot.current_state.dq_d, robot.current_state.ddq_d);
+                }
                 return out;
             });
         }
@@ -500,12 +504,13 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
 
                 JointVelocities out = JointVelocities(robot.if_cmds.qd);
                 
-                out.dq = franka::limitRate(
-                    franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
-                    franka::computeLowerLimitsJointVelocity(robot.current_state.q_d), 
-                    franka::kMaxJointAcceleration, franka::kMaxJointJerk, 
-                    out.dq, robot.current_state.dq_d, robot.current_state.ddq_d);
-
+                if (!limit_override) {
+                    out.dq = franka::limitRate(
+                        franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
+                        franka::computeLowerLimitsJointVelocity(robot.current_state.q_d), 
+                        franka::kMaxJointAcceleration, franka::kMaxJointJerk, 
+                        out.dq, robot.current_state.dq_d, robot.current_state.ddq_d);
+                }
                 return out;
             });
         }
@@ -529,10 +534,10 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                 // std::lock_guard<std::mutex> lock(write_mutex_);
 
                 Torques out = Torques(robot.if_cmds.tau);
-                
-                out.tau_J =
-                    franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
-
+                if (!limit_override) {
+                    out.tau_J =
+                        franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
+                }
                 return out;
             });
         }

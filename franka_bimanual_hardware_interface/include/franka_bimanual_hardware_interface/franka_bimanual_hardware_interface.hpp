@@ -145,6 +145,7 @@ private:
 
     std::vector<RobotUnit> arms; 
     ModeSwitchPlan mode_switch_plan;  
+    bool limit_override = false;
 
     hardware_interface::return_type who_and_what_switched(
         const std::vector<std::string>& interfaces,

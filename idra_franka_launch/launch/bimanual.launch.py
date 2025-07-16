@@ -28,6 +28,7 @@ def robot_description_dependent_nodes_spawner(
         load_gripper,
         gripper_type,
         self_collisions,
+        limit_override,
         left_ip,
         right_ip
     ):
@@ -42,6 +43,7 @@ def robot_description_dependent_nodes_spawner(
         fake_sensor_commands
     )
 
+    limit_override_str = context.perform_substitution(limit_override)
     left_ip_str = context.perform_substitution(left_ip)
     right_ip_str = context.perform_substitution(right_ip)
 
@@ -67,6 +69,7 @@ def robot_description_dependent_nodes_spawner(
             'use_fake_hardware': use_fake_hardware_str,
             'fake_sensor_commands': fake_sensor_commands_str,
 
+            'limit_override': limit_override_str,
             'franka1_ip': right_ip_str,
             'franka2_ip': left_ip_str,
 
@@ -124,6 +127,7 @@ def generate_launch_description():
     use_fake_hardware_parameter_name = 'use_fake_hardware'
     fake_sensor_commands_parameter_name = 'use_fake_sensor_commands'
 
+    limit_override_name = 'limit_override'
     robot_left_ip_parameter_name = 'left_ip'
     robot_right_ip_parameter_name = 'right_ip'
 
@@ -138,6 +142,7 @@ def generate_launch_description():
         fake_sensor_commands_parameter_name
     )
 
+    limit_override = LaunchConfiguration(limit_override_name)
     left_ip = LaunchConfiguration(robot_left_ip_parameter_name)
     right_ip = LaunchConfiguration(robot_right_ip_parameter_name)
 
@@ -152,6 +157,7 @@ def generate_launch_description():
             load_gripper,
             gripper_type,
             enable_self_collisions,
+            limit_override,
             left_ip,
             right_ip
         ]
@@ -180,14 +186,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_velocity_controller_left', '--controller-manager', '/controller_manager'],
+        arguments=['joint_effort_controller_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_velocity_controller_right', '--controller-manager', '/controller_manager'],
+        arguments=['joint_effort_controller_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -240,6 +246,12 @@ def generate_launch_description():
             description='Select the gripper type of the end-effector. '
                         'You can select between franka_hand and cobot_pump',
             default_value='franka_hand'
+        ),
+        DeclareLaunchArgument(
+            limit_override_name,
+            description='If set to true, hardware interface will skip '
+                        'franka::limitRate controls',
+            default_value='false'
         ),
         DeclareLaunchArgument(
             robot_left_ip_parameter_name,
