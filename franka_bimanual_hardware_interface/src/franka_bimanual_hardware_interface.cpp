@@ -276,7 +276,7 @@ HardwareInterface::export_command_interfaces() {
 
 hardware_interface::return_type
 HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& /* period */) {
-    // This is used onlu when there is no controller loaded
+    // This is used only when there is no controller loaded
 
     for (RobotUnit& robot : arms) {
         if (!robot.control) {
@@ -294,7 +294,7 @@ HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& 
 
 hardware_interface::return_type
 HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration& period ) {
-    // EMPTY. DONE DIRECTLY IN THE CONTROL SECTION
+    // Copies the command from the exported interfaces to the command used by the robot to avoid concurrency problems
 
     for (RobotUnit& robot : arms) {
         if (robot.control) {
@@ -303,8 +303,6 @@ HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration&
             robot.if_cmds = robot.exported_cmds;
         }
     }
-
-    //Copiare i comandi, bridge coperto da mutex e quello scritto dal robot libero
 
     return hardware_interface::return_type::OK;
 }
