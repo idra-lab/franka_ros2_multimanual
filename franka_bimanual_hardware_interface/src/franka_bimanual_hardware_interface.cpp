@@ -16,15 +16,6 @@
 #include <franka/control_tools.h>
 #include <franka/rate_limiting.h>
 
-/*
-INFO
-    - Tutti e due si controllano singolarmente rimuovendo le interfacce degli altri
-    - Spawnano contemporaneamente senza controlli
-
-    - Effort interface funziona ma va in blocco dopo 360, 
-    probabilmente perche' serve velocita' infinita dato che e' finita la rotazione
-*/
-
 //  ____            _                 _   _
 // |  _ \  ___  ___| | __ _ _ __ __ _| |_(_) ___  _ __  ___
 // | | | |/ _ \/ __| |/ _` | '__/ _` | __| |/ _ \| '_ \/ __|
