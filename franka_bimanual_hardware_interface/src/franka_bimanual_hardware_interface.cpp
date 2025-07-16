@@ -199,25 +199,30 @@ HardwareInterface::on_error(const rclcpp_lifecycle::State& prev_state) {
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    // Stop everything and attempt recovery
-    RCLCPP_INFO(get_logger(), "%f %f", 
-        arms[0].current_state.control_command_success_rate, 
-        arms[1].current_state.control_command_success_rate
-    );
+    for (RobotUnit& arm : arms) {
+        reset_controller(arm);
+    }
 
-    RCLCPP_INFO(get_logger(), "E1: %s - %s", 
-        std::string(arms[0].current_state.current_errors).c_str(), 
-        std::string(arms[0].current_state.last_motion_errors).c_str()
-    );
+    for (const RobotUnit& arm : arms) {
+        RCLCPP_INFO(get_logger(), "Error dump of %s", 
+            arm.name.c_str()
+        );
 
-    RCLCPP_INFO(get_logger(), "E2: %s - %s", 
-        std::string(arms[1].current_state.current_errors).c_str(), 
-        std::string(arms[1].current_state.last_motion_errors).c_str()
-    );
+        RCLCPP_INFO(get_logger(), "Command success rate: %f", 
+            arm.current_state.control_command_success_rate
+        );
 
-    // After recovery, you are in an "Unconfigured" like state. The system
-    // will need to be configured and activated again.
-    RCLCPP_INFO(get_logger(), "on_error() processed. System is now inactive and requires reconfiguration.");
+        RCLCPP_INFO(get_logger(), "Current errors: %s", 
+            std::string(arm.current_state.current_errors).c_str()
+        );
+
+        RCLCPP_INFO(get_logger(), "Last motion errors: %s", 
+            std::string(arm.current_state.last_motion_errors).c_str()
+        );
+    }
+
+    RCLCPP_INFO(get_logger(), "System is now inactive and requires reconfiguration.");
+
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
