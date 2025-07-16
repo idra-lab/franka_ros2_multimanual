@@ -14,12 +14,12 @@ class PositionPublisher(Node):
         super().__init__('position_publisher')
         self.publisher_left = self.create_publisher(
             Float64MultiArray, 
-            '/joint_position_controller_left/commands',
+            '/joint_position_left/commands',
             10
         )
         self.publisher_right = self.create_publisher(
             Float64MultiArray, 
-            '/joint_position_controller_right/commands',
+            '/joint_position_right/commands',
             10
         )
         timer_period = 0.5  # seconds
@@ -33,12 +33,12 @@ class PositionPublisher(Node):
         now = self.get_clock().now()
         elapsed_time = (now - self.start_time).nanoseconds / 1e9  # seconds
 
-        if elapsed_time >= 5:
+        if elapsed_time >= 0:
             self.get_logger().info('Stopping timer after 5 seconds.')
             self.timer.cancel()
 
             msg = Float64MultiArray()
-            msg.data = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            msg.data = [0.465088, -0.107690, 0.149491, -1.936844, -2.535822, 1.673192, 2.566144]
             self.publisher_left.publish(msg)
             self.publisher_right.publish(msg)
             self.get_logger().info(f'Sent: "{msg.data}"')

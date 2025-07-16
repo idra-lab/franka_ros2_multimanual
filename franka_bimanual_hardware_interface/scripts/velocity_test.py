@@ -12,12 +12,12 @@ class VelocityPublisher(Node):
         super().__init__('velocity_publisher')
         self.publisher_left = self.create_publisher(
             Float64MultiArray, 
-            '/joint_velocity_controller_left/commands',
+            '/joint_velocity_left/commands',
             10
         )
         self.publisher_right = self.create_publisher(
             Float64MultiArray, 
-            '/joint_velocity_controller_right/commands',
+            '/joint_velocity_right/commands',
             10
         )
         timer_period = 0.5  # seconds

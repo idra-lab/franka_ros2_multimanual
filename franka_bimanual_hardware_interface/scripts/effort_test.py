@@ -12,12 +12,12 @@ class EffortPublisher(Node):
         super().__init__('effort_publisher')
         self.publisher_left = self.create_publisher(
             Float64MultiArray, 
-            '/joint_effort_controller_left/commands',
+            '/joint_effort_left/commands',
             10
         )
         self.publisher_right = self.create_publisher(
             Float64MultiArray, 
-            '/joint_effort_controller_right/commands',
+            '/joint_effort_right/commands',
             10
         )
         timer_period = 0.01  # seconds

@@ -3,31 +3,31 @@ controller_manager:
     thread_priority: 99
     update_rate: 1000  # Hz
   
-    joint_position_controller_left:
+    joint_position_left:
       type: position_controllers/JointGroupPositionController
 
-    joint_position_controller_right:
+    joint_position_right:
       type: position_controllers/JointGroupPositionController
 
-    joint_velocity_controller_all:
+    joint_velocity_all:
       type: velocity_controllers/JointGroupVelocityController
 
-    joint_velocity_controller_left:
+    joint_velocity_left:
       type: velocity_controllers/JointGroupVelocityController
 
-    joint_velocity_controller_right:
+    joint_velocity_right:
       type: velocity_controllers/JointGroupVelocityController
 
-    joint_effort_controller_left:
+    joint_effort_left:
       type: effort_controllers/JointGroupEffortController
       
-    joint_effort_controller_right:
+    joint_effort_right:
       type: effort_controllers/JointGroupEffortController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-joint_position_controller_left:
+joint_position_left:
   ros__parameters:
     joints:
       - franka2_fr3_joint1
@@ -38,7 +38,7 @@ joint_position_controller_left:
       - franka2_fr3_joint6
       - franka2_fr3_joint7
 
-joint_position_controller_right:
+joint_position_right:
   ros__parameters:
     joints:
       - franka1_fr3_joint1
@@ -49,7 +49,7 @@ joint_position_controller_right:
       - franka1_fr3_joint6
       - franka1_fr3_joint7
 
-joint_velocity_controller_all:
+joint_velocity_all:
   ros__parameters:
     joints:
       - franka1_fr3_joint1
@@ -67,7 +67,7 @@ joint_velocity_controller_all:
       - franka2_fr3_joint6
       - franka2_fr3_joint7
 
-joint_velocity_controller_left:
+joint_velocity_left:
   ros__parameters:
     joints:
       - franka2_fr3_joint1
@@ -78,7 +78,7 @@ joint_velocity_controller_left:
       - franka2_fr3_joint6
       - franka2_fr3_joint7
 
-joint_velocity_controller_right:
+joint_velocity_right:
   ros__parameters:
     joints:
       - franka1_fr3_joint1
@@ -89,7 +89,7 @@ joint_velocity_controller_right:
       - franka1_fr3_joint6
       - franka1_fr3_joint7
 
-joint_effort_controller_left:
+joint_effort_left:
   ros__parameters:
     joints:
       - franka2_fr3_joint1
@@ -103,7 +103,7 @@ joint_effort_controller_left:
       has_velocity_limits: true
       max_velocity: 2.175
 
-joint_effort_controller_right:
+joint_effort_right:
   ros__parameters:
     joints:
       - franka1_fr3_joint1

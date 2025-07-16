@@ -20,6 +20,44 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+def robot_gripper_spawner(
+    context: LaunchContext,
+    robot_ip, 
+    robot_name, # TODO: not sure this is conventional
+    use_fake_hardware,
+    arm_id = 'fr3'
+):
+
+    robot_ip_str = context.perform_substitution(robot_ip)
+
+    default_joint_name_postfix = '_finger_joint'
+    joint_names_1 = robot_name + '_' + arm_id + default_joint_name_postfix + '1'
+    joint_names_2 = robot_name + '_' + arm_id + default_joint_name_postfix + '2'
+    joint_names = [joint_names_1, joint_names_2]
+
+
+    # Load the gripper configuration file
+    gripper_config = os.path.join(
+        get_package_share_directory('franka_gripper'), 'config', 'franka_gripper_node.yaml'
+    )
+
+    return [
+        Node(
+            package='franka_gripper',
+            executable='franka_gripper_node',
+            name=['franka_gripper'],
+            namespace=robot_name,
+            parameters=[
+                {
+                    'robot_ip': robot_ip_str,
+                    'joint_names': joint_names
+                }, 
+                gripper_config
+            ],
+            condition=UnlessCondition(use_fake_hardware),
+        )
+    ]
+
 def robot_description_dependent_nodes_spawner(
         context: LaunchContext,
         use_gazebo,
@@ -162,6 +200,24 @@ def generate_launch_description():
             right_ip
         ]
     )
+
+    robot_gripper_left = OpaqueFunction(
+        function=robot_gripper_spawner,
+        args=[
+            left_ip,
+            'franka2',
+            use_fake_hardware, 
+        ]
+    )
+
+    robot_gripper_right = OpaqueFunction(
+        function=robot_gripper_spawner,
+        args=[
+            right_ip,
+            'franka1',
+            use_fake_hardware, 
+        ]
+    )
     
     # Gazebo specific configurations
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
@@ -186,14 +242,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_effort_controller_left', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_effort_controller_right', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -267,6 +323,8 @@ def generate_launch_description():
         ),
 
         robot_description_dependent_nodes_spawner_opaque_function,
+        robot_gripper_left,
+        robot_gripper_right,
 
         # Launch Gazebo
         IncludeLaunchDescription(
