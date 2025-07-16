@@ -106,6 +106,7 @@
   <xacro:arg name="gazebo_effort" default="false" />
 
   <xacro:arg name="multi_arm" default="true" />
+  <xacro:arg name="special_connection" default='' />
 
   <xacro:arg name="franka1_ip" default="192.160.100.11" />
   <xacro:arg name="franka2_ip" default="192.160.100.12" />
