@@ -300,6 +300,7 @@ hardware_interface::return_type
 HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration& period ) {
     // EMPTY. DONE DIRECTLY IN THE CONTROL SECTION
 
+    
     //Copiare i comandi, bridge coperto da mutex e quello scritto dal robot libero
 
     return hardware_interface::return_type::OK;
@@ -412,7 +413,7 @@ hardware_interface::return_type HardwareInterface::who_and_what_switched(const s
         }
 
         if (who < 0) {
-            RCLCPP_ERROR(get_logger(), "An unknown robot tried to activate an interface");
+            RCLCPP_ERROR(get_logger(), "An unknown robot tried to modifty an interface");
             return hardware_interface::return_type::ERROR;
         }
 
@@ -423,7 +424,7 @@ hardware_interface::return_type HardwareInterface::who_and_what_switched(const s
         } else if (iface.find("effort") != std::string::npos) {
             what = ControlMode::EFFORT;
         } else {
-            RCLCPP_ERROR(get_logger(), "%s tried to activate an unsupported interface", 
+            RCLCPP_ERROR(get_logger(), "%s tried to modify an unsupported interface", 
                 arms[who].name.c_str()
             );
             return hardware_interface::return_type::ERROR; 
@@ -434,7 +435,7 @@ hardware_interface::return_type HardwareInterface::who_and_what_switched(const s
             if (change.first == who) {
                 already_in = true;
                 if (change.second != what) {
-                    RCLCPP_ERROR(get_logger(), "%s tried to activate %s interface, but it has already activated %s", 
+                    RCLCPP_ERROR(get_logger(), "%s tried to modify %s interface, but it has modified %s", 
                         arms[who].name.c_str(), control_to_string(what).c_str(), control_to_string(change.second).c_str()
                     );
                     return hardware_interface::return_type::ERROR;   
