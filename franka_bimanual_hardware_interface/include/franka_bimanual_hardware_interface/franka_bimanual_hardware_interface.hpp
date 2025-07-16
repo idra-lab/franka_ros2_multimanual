@@ -52,17 +52,20 @@ public:
         EFFORT
     };
 
+    struct ControlValues { 
+        Vec7 q;
+        Vec7 qd;
+        Vec7 tau;
+    };
+
     struct ModeSwitchPlan {
         std::vector<std::pair<long, ControlMode>> activations;
         std::vector<std::pair<long, ControlMode>> deactivations;
     };
 
     struct RobotUnit {
-        struct { 
-            Vec7 q;
-            Vec7 qd;
-            Vec7 tau;
-        } if_states, if_cmds;
+        ControlValues if_states, if_cmds;
+        ControlValues exported_cmds;
 
         RobotState current_state;
         bool first_position_update = true;
@@ -71,6 +74,7 @@ public:
         std::string ip   = "";
 
         std::unique_ptr<std::mutex> control_mutex = std::make_unique<std::mutex>();
+        std::unique_ptr<std::mutex> write_mutex   = std::make_unique<std::mutex>();
 
         FrankaPtr arm      = nullptr;
         ControlPtr control = nullptr;

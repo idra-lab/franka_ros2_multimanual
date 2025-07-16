@@ -246,7 +246,7 @@ HardwareInterface::export_state_interfaces() {
 
             state_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].if_states.q[i]);
             state_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].if_states.qd[i]);
-            state_interfaces.emplace_back(jnt_name, HW_IF_EFFORT, &arms[p].if_states.tau[i]);
+            state_interfaces.emplace_back(jnt_name, HW_IF_EFFORT,   &arms[p].if_states.tau[i]);
         }
     }
 
@@ -269,9 +269,9 @@ HardwareInterface::export_command_interfaces() {
         for (long i = 0; i < 7; ++i) {
             jnt_name = arms[p].name + "_fr3_joint" + std::to_string(i+1);
 
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].if_cmds.q[i]);
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].if_cmds.qd[i]);
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_EFFORT, &arms[p].if_cmds.tau[i]);
+            cmd_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].exported_cmds.q[i]);
+            cmd_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].exported_cmds.qd[i]);
+            cmd_interfaces.emplace_back(jnt_name, HW_IF_EFFORT,   &arms[p].exported_cmds.tau[i]);
         }
     }
 
@@ -300,7 +300,14 @@ hardware_interface::return_type
 HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration& period ) {
     // EMPTY. DONE DIRECTLY IN THE CONTROL SECTION
 
-    
+    for (RobotUnit& robot : arms) {
+        if (robot.control) {
+            std::lock_guard<std::mutex> lock(*robot.write_mutex);
+
+            robot.if_cmds = robot.exported_cmds;
+        }
+    }
+
     //Copiare i comandi, bridge coperto da mutex e quello scritto dal robot libero
 
     return hardware_interface::return_type::OK;
@@ -375,8 +382,10 @@ HardwareInterface::perform_command_mode_switch(
         if (change.second == ControlMode::POSITION) {
             arm.first_position_update = true;
         } else if (change.second == ControlMode::VELOCITY) {
+            std::fill(arm.exported_cmds.qd.begin(), arm.exported_cmds.qd.end(), 0);
             std::fill(arm.if_cmds.qd.begin(), arm.if_cmds.qd.end(), 0);
         } else if (change.second == ControlMode::EFFORT) {
+            std::fill(arm.exported_cmds.tau.begin(), arm.exported_cmds.tau.end(), 0);
             std::fill(arm.if_cmds.tau.begin(), arm.if_cmds.tau.end(), 0);
         } 
 
@@ -464,24 +473,29 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     robot.if_states.qd  = robot.current_state.dq;
                     robot.if_states.tau = robot.current_state.tau_J;
 
-                    if (robot.first_position_update && robot.control_mode == ControlMode::POSITION) {
+                    if (robot.first_position_update) {
+                        // std::lock_guard<std::mutex> lock(*robot.write_mutex);
                         RCLCPP_INFO(get_logger(), "First position initialized in arm %s", robot.name.c_str());
+                        std::copy(robot.if_states.q.begin(), robot.if_states.q.end(), robot.exported_cmds.q.begin());
                         std::copy(robot.if_states.q.begin(), robot.if_states.q.end(), robot.if_cmds.q.begin());
                         robot.first_position_update = false;
                     }
                 }
-                // std::lock_guard<std::mutex> lock(write_mutex_);
 
-                JointPositions out = JointPositions(robot.if_cmds.q);
-                
-                if (!limit_override) {
-                    out.q = franka::limitRate(
-                        franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
-                        franka::computeLowerLimitsJointVelocity(robot.current_state.q_d),
-                        franka::kMaxJointAcceleration, franka::kMaxJointJerk, out.q,
-                        robot.current_state.q_d, robot.current_state.dq_d, robot.current_state.ddq_d);
+                {
+                    std::lock_guard<std::mutex> lock(*robot.write_mutex);
+                    JointPositions out = JointPositions(robot.if_cmds.q);
+                    
+                    if (!limit_override) {
+                        out.q = franka::limitRate(
+                            franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
+                            franka::computeLowerLimitsJointVelocity(robot.current_state.q_d),
+                            franka::kMaxJointAcceleration, franka::kMaxJointJerk, out.q,
+                            robot.current_state.q_d, robot.current_state.dq_d, robot.current_state.ddq_d);
+                    }
+
+                    return out;
                 }
-                return out;
             });
         }
         catch(franka::ControlException& e){
@@ -501,18 +515,20 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     robot.if_states.qd  = robot.current_state.dq;
                     robot.if_states.tau = robot.current_state.tau_J;
                 }
-                // std::lock_guard<std::mutex> lock(write_mutex_);
-
-                JointVelocities out = JointVelocities(robot.if_cmds.qd);
-                
-                if (!limit_override) {
-                    out.dq = franka::limitRate(
-                        franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
-                        franka::computeLowerLimitsJointVelocity(robot.current_state.q_d), 
-                        franka::kMaxJointAcceleration, franka::kMaxJointJerk, 
-                        out.dq, robot.current_state.dq_d, robot.current_state.ddq_d);
+            
+                {
+                    std::lock_guard<std::mutex> lock(*robot.write_mutex);
+                    JointVelocities out = JointVelocities(robot.if_cmds.qd);
+                    
+                    if (!limit_override) {
+                        out.dq = franka::limitRate(
+                            franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),
+                            franka::computeLowerLimitsJointVelocity(robot.current_state.q_d), 
+                            franka::kMaxJointAcceleration, franka::kMaxJointJerk, 
+                            out.dq, robot.current_state.dq_d, robot.current_state.ddq_d);
+                    }
+                    return out;
                 }
-                return out;
             });
         }
         catch(franka::ControlException& e){
@@ -532,14 +548,16 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     robot.if_states.qd  = robot.current_state.dq;
                     robot.if_states.tau = robot.current_state.tau_J;
                 }
-                // std::lock_guard<std::mutex> lock(write_mutex_);
 
-                Torques out = Torques(robot.if_cmds.tau);
-                if (!limit_override) {
-                    out.tau_J =
-                        franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
+                {
+                    std::lock_guard<std::mutex> lock(*robot.write_mutex);
+                    Torques out = Torques(robot.if_cmds.tau);
+                    if (!limit_override) {
+                        out.tau_J =
+                            franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
+                    }
+                    return out;
                 }
-                return out;
             });
         }
         catch(franka::ControlException& e){
