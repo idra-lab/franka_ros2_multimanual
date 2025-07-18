@@ -38,7 +38,7 @@ namespace franka {
 
 /** 
 * This class implements the hardware interface for handling multiple 
-* Franka Emika robots.
+* Franka Research 3 (FR3) robots.
 *
 * @author Alessandro Moscatelli
 */
