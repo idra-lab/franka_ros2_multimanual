@@ -42,15 +42,31 @@ namespace franka {
 */
 class HardwareInterface : public hardware_interface::SystemInterface {
 public:
+    template <std::size_t size>
+    using DoubleArr  = std::array<double, size>;
     /**
-    * Array of six doubles used to represent joint velocities
+    * Array of six doubles used to represent cartesian velocities
     */
-    using Vec6       = std::array<double, 6>;
+    using Arr6       = std::array<double, 6>;
     
     /**
     * Array of seven doubles used to represent joint states
     */
-    using Vec7       = std::array<double, 7>;
+    using Arr7       = std::array<double, 7>;
+
+    /**
+     * From Franka hardware interface: elbow configuration.
+     *
+     * The values of the array are:
+     *  - elbow[0]: Position of the 3rd joint in \f$[rad]\f$.
+     *  - elbow[1]: Flip direction of the elbow (4th joint):
+     *    - +1 if \f$q_4 > \alpha\f$
+     *    - 0 if \f$q_4 == \alpha \f$
+     *    - -1 if \f$q_4 < \alpha \f$
+     *    .
+     *    with \f$\alpha = -0.467002423653011\f$ \f$rad\f$
+     */
+    using ElbowArr   = std::array<double, 2>; 
 
     /**
     * Unique pointer to a robot
@@ -75,7 +91,7 @@ public:
         POSITION,
         VELOCITY,
         EFFORT,
-        CARTESIAN_VELOCITY
+        CARTESIAN_VELOCITY,
     };
 
     /**
@@ -91,15 +107,20 @@ public:
         /**
         * Joint position values
         */
-        Vec7 q;
+        Arr7 q;
         /**
         *Joint velocity values
         */
-        Vec7 qd;
+        Arr7 qd;
         /**
         * Joint torque values
         */
-        Vec7 tau;
+        Arr7 tau;
+
+        /**
+         * State of the elbow configuration
+         */
+        ElbowArr elbow;
     };
 
     /**
@@ -109,19 +130,25 @@ public:
         /**
         * Joint position values
         */
-        Vec7 q;
+        Arr7 q;
         /**
         *Joint velocity values
         */
-        Vec7 qd;
+        Arr7 qd;
         /**
         * Joint torque values
         */
-        Vec7 tau;
+        Arr7 tau;
         /**
         * Cartesian velocity values
         */
-        Vec6 xd;
+        Arr6 xd;
+
+        /**
+         * Elbow values.
+         * This values are used only if the robot is controlled in cartesian position or velocity.
+         */
+        ElbowArr elbow;
     };
 
     /**
@@ -178,6 +205,8 @@ public:
         */
         bool first_position_update = true;
 
+        bool first_elbow_update = true;
+
         /**
         * Name of the robot
         */
@@ -215,6 +244,13 @@ public:
         * Current operational mode of the robot
         */
         ControlMode control_mode = ControlMode::INACTIVE;
+
+        /**
+         * Flag that signals if the robot is also being controlled with elbow inferfaces.
+         * This flag can be set to true if and only if control_mode is set to CARTESIAN_VELOCITY or CARTESIAN_POSITION
+         */
+        bool elbow_control = false;
+
     };
 
     /** 
@@ -223,9 +259,19 @@ public:
     const std::vector<std::string> cartesian_velocity_interfaces_names = {"vx", "vy", "vz", "wx", "wy", "wz"};
 
     /**
-    * Name of the cartesian velocity interface
+    * Identification name of the cartesian velocity interface
     */
     const std::string HW_IF_CART_VELOCITY = "cartesian_velocity";
+
+    /** 
+    * Names of elbow command interfaces 
+    */
+    const std::vector<std::string> elbow_interfaces_names = {"joint_3_position", "joint_4_sign"};
+
+    /** 
+    * Identification name of the elbow command interfaces 
+    */
+    const std::string HW_IF_ELBOW = "elbow_command";
 
     RCLCPP_SHARED_PTR_DEFINITIONS(HardwareInterface)
 
@@ -454,6 +500,8 @@ private:
     * @param robot Robot that is deactivating a controller
     */
     void reset_controller(RobotUnit& robot);   
+
+    void align_if_states(RobotUnit& robot, const RobotState& state);
 };
 
 }

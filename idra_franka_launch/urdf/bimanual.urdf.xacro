@@ -259,6 +259,13 @@
       <xacro:configure_joint joint_name="franka2_fr3_finger_joint1" initial_position="0.0" />
     </xacro:if>
 
+    <!-- Elbow interfaces -->
+    <xacro:general_purpose_io prefix="franka1_joint_3_position" command_interface="elbow_command" index="0"/>
+    <xacro:general_purpose_io prefix="franka1_joint_4_sign" command_interface="elbow_command" index="1"/>
+
+    <xacro:general_purpose_io prefix="franka2_joint_3_position" command_interface="elbow_command" index="0"/>
+    <xacro:general_purpose_io prefix="franka2_joint_4_sign" command_interface="elbow_command" index="1"/>
+
     <!-- Cartesian velocity interfaces -->
     <xacro:general_purpose_io prefix="franka1_vx" command_interface="cartesian_velocity" index="0"/>
     <xacro:general_purpose_io prefix="franka1_vy" command_interface="cartesian_velocity" index="1"/>

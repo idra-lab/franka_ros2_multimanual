@@ -233,7 +233,15 @@ HardwareInterface::export_state_interfaces() {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     std::string jnt_name = {};
 
-    state_interfaces.reserve(7 * 3 * arms.size());  // NOLINT: 7 joints * 3 states * n robots
+    /*
+    * NOLINT: 
+    * 7 joints * 3 states * n robots +
+    * 2 elbow + n robots
+    */
+    state_interfaces.reserve(
+        7 * 3 * arms.size() +
+        2 * arms.size()
+    );  
 
     for (long p = 0; p < arms.size(); ++p) {
         for (long i = 0; i < 7; ++i) {
@@ -243,6 +251,12 @@ HardwareInterface::export_state_interfaces() {
             state_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].if_states.q[i]);
             state_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].if_states.qd[i]);
             state_interfaces.emplace_back(jnt_name, HW_IF_EFFORT,   &arms[p].if_states.tau[i]);
+        }
+
+        for (long i = 0; i < 2; ++i) {
+            jnt_name = arms[p].name + "_" + elbow_interfaces_names[i];
+
+            state_interfaces.emplace_back(jnt_name, HW_IF_ELBOW, &arms[p].if_states.elbow[i]);
         }
     }
 
@@ -254,7 +268,6 @@ HardwareInterface::export_command_interfaces() {
     using hardware_interface::HW_IF_EFFORT;
     using hardware_interface::HW_IF_POSITION;
     using hardware_interface::HW_IF_VELOCITY;
-    
 
     std::vector<hardware_interface::CommandInterface> cmd_interfaces;
     std::string jnt_name = {};
@@ -262,9 +275,14 @@ HardwareInterface::export_command_interfaces() {
     /*
     * NOLINT: 
     * 7 joints * 3 cmd interfaces * n robots + 
-    * 6 cartesian velocites * n robots
+    * 6 cartesian velocites * n robots + 
+    * 2 elbow * n robots
     */
-    cmd_interfaces.reserve(7 * 3 * arms.size() + 6 * arms.size());  
+    cmd_interfaces.reserve(
+        7 * 3 * arms.size() + 
+        6 * arms.size() +
+        2 * arms.size()
+    );  
 
     for (long p = 0; p < arms.size(); ++p) {
         for (long i = 0; i < 7; ++i) {
@@ -280,6 +298,12 @@ HardwareInterface::export_command_interfaces() {
 
             cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_VELOCITY, &arms[p].exported_cmds.xd[i]);
         }
+
+        for (long i = 0; i < 2; ++i) {
+            jnt_name = arms[p].name + "_" + elbow_interfaces_names[i];
+
+            cmd_interfaces.emplace_back(jnt_name, HW_IF_ELBOW, &arms[p].exported_cmds.elbow[i]);
+        }
     }
 
     return cmd_interfaces;
@@ -294,9 +318,7 @@ HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& 
             std::lock_guard<std::mutex> lock(*robot.control_mutex);
             robot.current_state = robot.arm->readOnce();
 
-            robot.if_states.q   = robot.current_state.q;
-            robot.if_states.qd  = robot.current_state.dq;
-            robot.if_states.tau = robot.current_state.tau_J;
+            align_if_states(robot, robot.current_state);
         }
     }
 
@@ -417,7 +439,7 @@ HardwareInterface::perform_command_mode_switch(
 // |  __/| |  | |\ V / (_| | ||  __/
 // |_|   |_|  |_| \_/ \__,_|\__\___|
 //
-hardware_interface::return_type HardwareInterface::who_and_what_switched(const std::vector<std::string>& interfaces, std::vector<std::pair<long, ControlMode>>& changes) {
+hardware_interface::return_type HardwareInterface::who_and_what_switched(const std::vector<std::string>& interfaces, std::vector<ModeSwitch>& changes) {
 
     for (const std::string& iface : interfaces) {
         long who = -1;
@@ -442,6 +464,12 @@ hardware_interface::return_type HardwareInterface::who_and_what_switched(const s
             what = ControlMode::EFFORT;
         } else if (iface.find("/cartesian_velocity") != std::string::npos) {
             what = ControlMode::CARTESIAN_VELOCITY;
+        } else if (iface.find("/elbow_command") != std::string::npos) {
+            // TODO 
+            RCLCPP_WARN(get_logger(), "%s tried to activate elbow. Currently, for this controller conficts are not checked", 
+                arms[who].name.c_str()
+            );
+            return hardware_interface::return_type::ERROR; 
         } else {
             RCLCPP_ERROR(get_logger(), "%s tried to modify an unsupported interface", 
                 arms[who].name.c_str()
@@ -479,9 +507,7 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     std::lock_guard<std::mutex> lock(*robot.control_mutex);
                     robot.current_state = state;
 
-                    robot.if_states.q   = robot.current_state.q;
-                    robot.if_states.qd  = robot.current_state.dq;
-                    robot.if_states.tau = robot.current_state.tau_J;
+                    align_if_states(robot, state);
 
                     if (robot.first_position_update) {
                         // std::lock_guard<std::mutex> lock(*robot.write_mutex);
@@ -523,9 +549,7 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     std::lock_guard<std::mutex> lock(*robot.control_mutex);
                     robot.current_state = state;
 
-                    robot.if_states.q   = robot.current_state.q;
-                    robot.if_states.qd  = robot.current_state.dq;
-                    robot.if_states.tau = robot.current_state.tau_J;
+                    align_if_states(robot, state);
                 }
             
                 {
@@ -559,9 +583,7 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     std::lock_guard<std::mutex> lock(*robot.control_mutex);
                     robot.current_state = state;
 
-                    robot.if_states.q   = robot.current_state.q;
-                    robot.if_states.qd  = robot.current_state.dq;
-                    robot.if_states.tau = robot.current_state.tau_J;
+                    align_if_states(robot, state);
                 }
 
                 {
@@ -583,7 +605,7 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
         }
     };
 
-    const auto certesianVelocityControl = [this, &robot]() {
+    const auto cartesianVelocityControl = [this, &robot]() {
         try{
             robot.arm->control(
             [this, &robot](const franka::RobotState& state, const franka::Duration& /*period*/) {
@@ -591,14 +613,23 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     std::lock_guard<std::mutex> lock(*robot.control_mutex);
                     robot.current_state = state;
 
-                    robot.if_states.q   = robot.current_state.q;
-                    robot.if_states.qd  = robot.current_state.dq;
-                    robot.if_states.tau = robot.current_state.tau_J;
+                    align_if_states();
+
+                    if (robot.first_elbow_update) {
+                        // std::lock_guard<std::mutex> lock(*robot.write_mutex);
+                        RCLCPP_INFO(get_logger(), "First elbow initialized in arm %s", robot.name.c_str());
+                        std::copy(robot.if_states.elbow.begin(), robot.if_states.elbow.end(), robot.exported_cmds.elbow.begin());
+                        std::copy(robot.if_states.elbow.begin(), robot.if_states.elbow.end(), robot.if_cmds.elbow.begin());
+                        robot.first_elbow_update = false;
+                    }
                 }
 
                 {
                     std::lock_guard<std::mutex> lock(*robot.write_mutex);
-                    CartesianVelocities out = CartesianVelocities(robot.if_cmds.xd);
+
+                    CartesianVelocities out = robot.elbow_control ? 
+                        CartesianVelocities(robot.if_cmds.xd, robot.if_cmds.elbow) : 
+                        CartesianVelocities(robot.if_cmds.xd);
 
                     // RCLCPP_INFO(get_logger(), "%f %f", robot.if_cmds.xd[0], robot.exported_cmds.xd[0]);
 
@@ -629,7 +660,7 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
         } else if (mode == ControlMode::EFFORT) {
             robot.control = std::make_unique<std::thread>(jointEffortControl);
         } else if (mode == ControlMode::CARTESIAN_VELOCITY) {
-            robot.control = std::make_unique<std::thread>(certesianVelocityControl);
+            robot.control = std::make_unique<std::thread>(cartesianVelocityControl);
         } else {
             robot.control.reset(nullptr);
         }
@@ -643,13 +674,20 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
         } else if (mode == ControlMode::EFFORT) {
             robot.control = std::make_unique<std::thread>(jointEffortControl);
         } else if (mode == ControlMode::CARTESIAN_VELOCITY) {
-            robot.control = std::make_unique<std::thread>(certesianVelocityControl);
+            robot.control = std::make_unique<std::thread>(cartesianVelocityControl);
         } else {
             robot.control.reset(nullptr);
         }
         RCLCPP_INFO(get_logger(), "Attempt of recovery on %s successful", robot.name.c_str());
     }
 
+}
+
+void HardwareInterface::align_if_states(RobotUnit& robot, const RobotState& state) {
+    robot.if_states.q     = state.q;
+    robot.if_states.qd    = state.dq;
+    robot.if_states.tau   = state.tau_J;
+    robot.if_states.elbow = state.elbow;
 }
 
 void HardwareInterface::reset_controller(RobotUnit& robot) {
