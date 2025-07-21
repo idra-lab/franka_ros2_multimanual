@@ -318,7 +318,7 @@ HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& 
             std::lock_guard<std::mutex> lock(*robot.control_mutex);
             robot.current_state = robot.arm->readOnce();
 
-            align_if_states(robot, robot.current_state);
+            robot.copy_state_to_ifs(robot.current_state);
         }
     }
 
