@@ -58,6 +58,7 @@ install(
     scripts/position_test.py
     scripts/velocity_test.py
     scripts/effort_test.py
+    scripts/cart_vel_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 # Install library
