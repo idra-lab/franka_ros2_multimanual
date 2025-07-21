@@ -235,11 +235,13 @@ HardwareInterface::export_state_interfaces() {
 
     /*
     * NOLINT: 
-    * 7 joints * 3 states * n robots +
-    * 2 elbow + n robots
+    * 7 joints * 3 cmd interfaces * n robots + 
+    * 16 cartesian positions * n robots +
+    * 2 elbow * n robots
     */
     state_interfaces.reserve(
         7 * 3 * arms.size() +
+        16 * arms.size() +
         2 * arms.size()
     );  
 
@@ -251,6 +253,12 @@ HardwareInterface::export_state_interfaces() {
             state_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].if_states.q[i]);
             state_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].if_states.qd[i]);
             state_interfaces.emplace_back(jnt_name, HW_IF_EFFORT,   &arms[p].if_states.tau[i]);
+        }
+
+        for (long i = 0; i < 16; ++i) {
+            jnt_name = arms[p].name + "_" + std::to_string(i);
+
+            state_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].if_states.x[i]);
         }
 
         for (long i = 0; i < 2; ++i) {
@@ -276,11 +284,13 @@ HardwareInterface::export_command_interfaces() {
     * NOLINT: 
     * 7 joints * 3 cmd interfaces * n robots + 
     * 6 cartesian velocites * n robots + 
+    * 16 cartesian positions * n robots +
     * 2 elbow * n robots
     */
     cmd_interfaces.reserve(
         7 * 3 * arms.size() + 
         6 * arms.size() +
+        16 * arms.size() +
         2 * arms.size()
     );  
 
@@ -292,11 +302,17 @@ HardwareInterface::export_command_interfaces() {
             cmd_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].exported_cmds.qd[i]);
             cmd_interfaces.emplace_back(jnt_name, HW_IF_EFFORT,   &arms[p].exported_cmds.tau[i]);
         }
-
+        
         for (long i = 0; i < 6; ++i) {
             jnt_name = arms[p].name + "_" + cartesian_velocity_interfaces_names[i];
-
+            
             cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_VELOCITY, &arms[p].exported_cmds.xd[i]);
+        }
+
+        for (long i = 0; i < 16; ++i) {
+            jnt_name = arms[p].name + "_" + std::to_string(i);
+
+            cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].exported_cmds.x[i]);
         }
 
         for (long i = 0; i < 2; ++i) {
@@ -407,7 +423,7 @@ HardwareInterface::perform_command_mode_switch(
         );
 
         if (change.second == ControlMode::POSITION) {
-            arm.first_position_update = true;
+            arm.first_joint_position_update = true;
         } else if (change.second == ControlMode::VELOCITY) {
             std::fill(arm.exported_cmds.qd.begin(), arm.exported_cmds.qd.end(), 0);
             std::fill(arm.if_cmds.qd.begin(), arm.if_cmds.qd.end(), 0);
@@ -463,6 +479,8 @@ hardware_interface::return_type HardwareInterface::who_and_what_switched(const s
             what = ControlMode::VELOCITY;
         } else if (iface.find("/effort") != std::string::npos) {
             what = ControlMode::EFFORT;
+        } else if (iface.find("/cartesian_pose_command") != std::string::npos) {
+            what = ControlMode::CARTESIAN_VELOCITY;
         } else if (iface.find("/cartesian_velocity") != std::string::npos) {
             what = ControlMode::CARTESIAN_VELOCITY;
         } else if (iface.find("/elbow_command") != std::string::npos) {
@@ -509,6 +527,8 @@ std::string HardwareInterface::control_to_string(const ControlMode& mode) {
         return "velocity";
         case ControlMode::EFFORT:
         return "effort";
+        case ControlMode::CARTESIAN_POSITION:
+        return "cartesian position";
         case ControlMode::CARTESIAN_VELOCITY:
         return "cartesian velocity";
         default:

@@ -10,6 +10,7 @@ void FrankaRobotWrapper::copy_state_to_ifs(const franka::RobotState& state) {
     if_states.q     = state.q;
     if_states.qd    = state.dq;
     if_states.tau   = state.tau_J;
+    if_states.x     = state.O_T_EE;
     if_states.elbow = state.elbow;
 }
 
@@ -24,6 +25,8 @@ void FrankaRobotWrapper::setup_controller(ControlMode mode) {
         startController = LambdaControl::startJointVelocityControl(*this, limit_override);
     } else if (mode == ControlMode::EFFORT) {
         startController = LambdaControl::startJointEffortControl(*this, limit_override);
+    } else if (mode == ControlMode::CARTESIAN_POSITION) {
+        startController = LambdaControl::startCartesianPositionControl(*this, limit_override);
     } else if (mode == ControlMode::CARTESIAN_VELOCITY) {
         startController = LambdaControl::startCartesianVelocityControl(*this, limit_override);
     } else {

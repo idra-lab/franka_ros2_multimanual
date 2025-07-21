@@ -75,6 +75,11 @@ public:
         std::vector<ModeSwitch> deactivations;
     };
 
+    /**
+    * Identification name of the cartesian velocity interface
+    */
+    const std::string HW_IF_CART_POSITION = "cartesian_pose_command";
+
     /** 
     * Names of cartesian velocities interfaces 
     */

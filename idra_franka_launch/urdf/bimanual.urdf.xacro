@@ -266,6 +266,23 @@
     <xacro:general_purpose_io prefix="franka2_joint_3_position" command_interface="elbow_command" index="0"/>
     <xacro:general_purpose_io prefix="franka2_joint_4_sign" command_interface="elbow_command" index="1"/>
 
+    <!-- Cartesian position interfaces -->
+    <xacro:macro name="loop" params="i">
+      <xacro:unless value="${i == 16}">
+        <xacro:general_purpose_io prefix="franka1_${i}" command_interface="cartesian_pose_command" index="${i}"/>
+        <xacro:loop i="${i+1}"/>
+      </xacro:unless>
+    </xacro:macro>
+    <xacro:loop i="0"/>
+
+    <xacro:macro name="loop" params="i">
+      <xacro:unless value="${i == 16}">
+        <xacro:general_purpose_io prefix="franka2_${i}" command_interface="cartesian_pose_command" index="${i}"/>
+        <xacro:loop i="${i+1}"/>
+      </xacro:unless>
+    </xacro:macro>
+    <xacro:loop i="0"/>
+
     <!-- Cartesian velocity interfaces -->
     <xacro:general_purpose_io prefix="franka1_vx" command_interface="cartesian_velocity" index="0"/>
     <xacro:general_purpose_io prefix="franka1_vy" command_interface="cartesian_velocity" index="1"/>

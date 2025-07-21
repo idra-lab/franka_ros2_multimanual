@@ -17,12 +17,12 @@ std::function<void()> LambdaControl::startJointPositionControl(FrankaRobotWrappe
 
                 robot.copy_state_to_ifs(state);
 
-                if (robot.first_position_update) {
+                if (robot.first_joint_position_update) {
                     // std::lock_guard<std::mutex> lock(*robot.write_mutex);
-                    RCLCPP_INFO(robot.get_logger(), "First position initialized in arm %s", robot.name.c_str());
+                    RCLCPP_INFO(robot.get_logger(), "First joint position initialized in arm %s", robot.name.c_str());
                     std::copy(robot.if_states.q.begin(), robot.if_states.q.end(), robot.exported_cmds.q.begin());
                     std::copy(robot.if_states.q.begin(), robot.if_states.q.end(), robot.if_cmds.q.begin());
-                    robot.first_position_update = false;
+                    robot.first_joint_position_update = false;
                 }
             }
 
@@ -102,6 +102,56 @@ std::function<void()> LambdaControl::startJointEffortControl(FrankaRobotWrapper&
     };
 }
 
+std::function<void()> startCartesianPositionControl(FrankaRobotWrapper& robot, bool limit_override) {
+    return [&robot, limit_override](){
+        robot.arm->control([&robot, limit_override](const franka::RobotState& state, const franka::Duration& /*period*/) {
+            {
+                std::lock_guard<std::mutex> lock(*robot.control_mutex);
+                robot.current_state = state;
+
+                robot.copy_state_to_ifs(state);
+
+                if (robot.first_cartesian_position_update) {
+                    // std::lock_guard<std::mutex> lock(*write_mutex);
+                    RCLCPP_INFO(robot.get_logger(), "First cartesian position initialized in arm %s", robot.name.c_str());
+                    std::copy(robot.if_states.x.begin(), robot.if_states.x.end(), robot.exported_cmds.x.begin());
+                    std::copy(robot.if_states.x.begin(), robot.if_states.x.end(), robot.if_cmds.x.begin());
+                    robot.first_elbow_update = false;
+                }
+
+                if (robot.first_elbow_update) {
+                    // std::lock_guard<std::mutex> lock(*write_mutex);
+                    RCLCPP_INFO(robot.get_logger(), "First elbow initialized in arm %s", robot.name.c_str());
+                    std::copy(robot.if_states.elbow.begin(), robot.if_states.elbow.end(), robot.exported_cmds.elbow.begin());
+                    std::copy(robot.if_states.elbow.begin(), robot.if_states.elbow.end(), robot.if_cmds.elbow.begin());
+                    robot.first_elbow_update = false;
+                }
+            }
+
+            {
+                std::lock_guard<std::mutex> lock(*robot.write_mutex);
+
+                franka::CartesianPose out = robot.elbow_control ? 
+                    franka::CartesianPose(robot.if_cmds.x, robot.if_cmds.elbow) : 
+                    franka::CartesianPose(robot.if_cmds.x);
+
+                // RCLCPP_INFO(get_logger(), "%f %f", if_cmds.xd[0], exported_cmds.xd[0]);
+
+                if (!limit_override) {
+                    out.O_T_EE = franka::limitRate(franka::kMaxTranslationalVelocity, franka::kMaxTranslationalAcceleration,
+                        franka::kMaxTranslationalJerk, franka::kMaxRotationalVelocity,
+                        franka::kMaxRotationalAcceleration, franka::kMaxRotationalJerk,
+                        out.O_T_EE, robot.current_state.O_T_EE_c,
+                        robot.current_state.O_dP_EE_c, robot.current_state.O_ddP_EE_c);
+                }
+
+                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+
+                return out;
+            }
+        });
+    };
+}
 
 std::function<void()> LambdaControl::startCartesianVelocityControl(FrankaRobotWrapper& robot, bool limit_override) {
     return [&robot, limit_override](){

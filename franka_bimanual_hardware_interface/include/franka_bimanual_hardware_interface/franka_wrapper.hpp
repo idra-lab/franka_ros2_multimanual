@@ -53,6 +53,12 @@ class FrankaRobotWrapper {
     using Arr7       = std::array<double, 7>;
 
     /**
+    * Array of sixteen doubles used to represent cartesian pose.
+    * Cartesian pose in expressed by a column-major transformation matrix.
+    */
+    using Arr16      = std::array<double, 16>;
+
+    /**
      * From Franka hardware interface: elbow configuration.
      *
      * The values of the array are:
@@ -89,6 +95,7 @@ class FrankaRobotWrapper {
         POSITION,
         VELOCITY,
         EFFORT,
+        CARTESIAN_POSITION,
         CARTESIAN_VELOCITY
     };
 
@@ -108,7 +115,10 @@ class FrankaRobotWrapper {
         * Joint torque values
         */
         Arr7 tau;
-
+        /**
+         * Cartesian position values 
+         */
+        Arr16 x;
         /**
          * State of the elbow configuration
          */
@@ -132,10 +142,13 @@ class FrankaRobotWrapper {
         */
         Arr7 tau;
         /**
+         * Cartesian position values 
+         */
+        Arr16 x;
+        /**
         * Cartesian velocity values
         */
         Arr6 xd;
-
         /**
          * Elbow values.
          * This values are used only if the robot is controlled in cartesian position or velocity.
@@ -166,13 +179,15 @@ class FrankaRobotWrapper {
     franka::RobotState current_state;
 
     /**
-    * Boolean value that signals if the robot has to update his q values.
+    * Boolean value that signals if the robot has to update his joint position (q) values.
     *
     * This is done because when the position control is being activated, 
     * if_cmds and exported_cmds must be initialized with the same value of 
     * if_states to avoid errors. 
     */
-    bool first_position_update = true;
+    bool first_joint_position_update = true;
+
+    bool first_cartesian_position_update = true;
 
     bool first_elbow_update = true;
 
