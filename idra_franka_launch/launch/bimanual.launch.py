@@ -242,14 +242,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_velocity_left', '--controller-manager', '/controller_manager'],
+        arguments=['cartesian_velocity_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_velocity_right', '--controller-manager', '/controller_manager'],
+        arguments=['cartesian_velocity_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -323,8 +323,8 @@ def generate_launch_description():
         ),
 
         robot_description_dependent_nodes_spawner_opaque_function,
-        robot_gripper_left,
-        robot_gripper_right,
+        # robot_gripper_left,
+        # robot_gripper_right,
 
         # Launch Gazebo
         IncludeLaunchDescription(
