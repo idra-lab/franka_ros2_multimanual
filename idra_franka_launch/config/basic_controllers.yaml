@@ -27,6 +27,12 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
+    cartesian_pose_left:
+      type: forward_command_controller/ForwardCommandController
+
+    cartesian_pose_right:
+      type: forward_command_controller/ForwardCommandController
+
     cartesian_velocity_left:
       type: forward_command_controller/ForwardCommandController
 
@@ -122,6 +128,48 @@ joint_effort_right:
     joint_limits:
       has_velocity_limits: true
       max_velocity: 2.175
+
+cartesian_pose_left:
+  ros__parameters:
+    joints:
+      - franka2_0
+      - franka2_1
+      - franka2_2
+      - franka2_3
+      - franka2_4
+      - franka2_5
+      - franka2_6
+      - franka2_7
+      - franka2_8
+      - franka2_9
+      - franka2_10
+      - franka2_11
+      - franka2_12
+      - franka2_13
+      - franka2_14
+      - franka2_15   
+    interface_name: cartesian_pose_command
+
+cartesian_pose_right:
+  ros__parameters:
+    joints:
+      - franka1_0
+      - franka1_1
+      - franka1_2
+      - franka1_3
+      - franka1_4
+      - franka1_5
+      - franka1_6
+      - franka1_7
+      - franka1_8
+      - franka1_9
+      - franka1_10
+      - franka1_11
+      - franka1_12
+      - franka1_13
+      - franka1_14
+      - franka1_15   
+    interface_name: cartesian_pose_command
 
 cartesian_velocity_left:
   ros__parameters:

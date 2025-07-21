@@ -430,6 +430,8 @@ HardwareInterface::perform_command_mode_switch(
         } else if (change.second == ControlMode::EFFORT) {
             std::fill(arm.exported_cmds.tau.begin(), arm.exported_cmds.tau.end(), 0);
             std::fill(arm.if_cmds.tau.begin(), arm.if_cmds.tau.end(), 0);
+        } else if (change.second == ControlMode::POSITION) {
+            arm.first_cartesian_position_update = true;  
         } else if (change.second == ControlMode::CARTESIAN_VELOCITY) {
             std::fill(arm.exported_cmds.xd.begin(), arm.exported_cmds.xd.end(), 0);
             std::fill(arm.if_cmds.xd.begin(), arm.if_cmds.xd.end(), 0);
@@ -480,7 +482,7 @@ hardware_interface::return_type HardwareInterface::who_and_what_switched(const s
         } else if (iface.find("/effort") != std::string::npos) {
             what = ControlMode::EFFORT;
         } else if (iface.find("/cartesian_pose_command") != std::string::npos) {
-            what = ControlMode::CARTESIAN_VELOCITY;
+            what = ControlMode::CARTESIAN_POSITION;
         } else if (iface.find("/cartesian_velocity") != std::string::npos) {
             what = ControlMode::CARTESIAN_VELOCITY;
         } else if (iface.find("/elbow_command") != std::string::npos) {

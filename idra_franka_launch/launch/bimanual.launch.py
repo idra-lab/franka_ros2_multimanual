@@ -242,14 +242,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['cartesian_velocity_left', '--controller-manager', '/controller_manager'],
+        arguments=['cartesian_pose_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['cartesian_velocity_right', '--controller-manager', '/controller_manager'],
+        arguments=['cartesian_pose_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 

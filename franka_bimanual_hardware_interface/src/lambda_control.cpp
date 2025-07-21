@@ -102,7 +102,7 @@ std::function<void()> LambdaControl::startJointEffortControl(FrankaRobotWrapper&
     };
 }
 
-std::function<void()> startCartesianPositionControl(FrankaRobotWrapper& robot, bool limit_override) {
+std::function<void()> LambdaControl::startCartesianPositionControl(FrankaRobotWrapper& robot, bool limit_override) {
     return [&robot, limit_override](){
         robot.arm->control([&robot, limit_override](const franka::RobotState& state, const franka::Duration& /*period*/) {
             {
@@ -116,7 +116,7 @@ std::function<void()> startCartesianPositionControl(FrankaRobotWrapper& robot, b
                     RCLCPP_INFO(robot.get_logger(), "First cartesian position initialized in arm %s", robot.name.c_str());
                     std::copy(robot.if_states.x.begin(), robot.if_states.x.end(), robot.exported_cmds.x.begin());
                     std::copy(robot.if_states.x.begin(), robot.if_states.x.end(), robot.if_cmds.x.begin());
-                    robot.first_elbow_update = false;
+                    robot.first_cartesian_position_update = false;
                 }
 
                 if (robot.first_elbow_update) {
