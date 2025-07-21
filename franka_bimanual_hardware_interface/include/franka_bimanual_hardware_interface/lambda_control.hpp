@@ -18,19 +18,28 @@
 #ifndef LAMBDA_CONTROL_HPP
 #define LAMBDA_CONTROL_HPP
 
+#include "franka_bimanual_hardware_interface/franka_wrapper.hpp"
+
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
+
 #include "rclcpp/logger.hpp"
 #include "rclcpp/macros.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 
-#include "franka/robot.h"
-#include "franka/active_control_base.h"
-
 namespace LambdaControl {
 
+    std::function<void()> startJointPositionControl(FrankaRobotWrapper& robot, bool limit_override);
+
+    std::function<void()> startJointVelocityControl(FrankaRobotWrapper& robot, bool limit_override);
+
+    std::function<void()> startJointEffortControl(FrankaRobotWrapper& robot, bool limit_override);
+
+    std::function<void()> startCartesianPositionControl(FrankaRobotWrapper& robot, bool limit_override);
+    
+    std::function<void()> startCartesianVelocityControl(FrankaRobotWrapper& robot, bool limit_override);
     
 }
 

@@ -259,15 +259,6 @@ public:
     */
     rclcpp::Logger& get_logger() { return logger; }
 
-    /**
-    * Converts a ControlMode into a string
-    *
-    * @param mode Mode to be converted
-    *  
-    * @return String representing the control mode
-    */
-    std::string control_to_string(const ControlMode& mode);
-
 private:
     /**
     * RCLCPP Logger

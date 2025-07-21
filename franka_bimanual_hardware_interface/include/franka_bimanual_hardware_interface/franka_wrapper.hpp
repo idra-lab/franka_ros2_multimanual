@@ -19,15 +19,14 @@
 #define FRANKA_WRAPPER_HPP
 
 #include <thread>
+#include <ostream>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 
-#include "rclcpp/logger.hpp"
-#include "rclcpp/macros.hpp"
-#include "rclcpp_lifecycle/state.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 #include "franka/robot.h"
 
@@ -90,7 +89,7 @@ class FrankaRobotWrapper {
         POSITION,
         VELOCITY,
         EFFORT,
-        CARTESIAN_VELOCITY,
+        CARTESIAN_VELOCITY
     };
 
     /**
@@ -221,7 +220,7 @@ class FrankaRobotWrapper {
      */
     bool elbow_control = false;
 
-    RCLCPP_SHARED_PTR_DEFINITIONS(FrankaRobotWrapper)
+    RCLCPP_SHARED_PTR_DEFINITIONS(FrankaRobotWrapper);
 
     void copy_state_to_ifs(const franka::RobotState& state);
 
