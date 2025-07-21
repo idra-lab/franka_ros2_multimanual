@@ -229,6 +229,13 @@
       </joint>
     </xacro:macro>
 
+    <xacro:macro name="general_purpose_io" params="prefix command_interface index">
+      <gpio name="${prefix}">
+        <command_interface name="${command_interface}"/>
+        <!-- <param name="index">${index}</param> -->
+      </gpio>
+    </xacro:macro>
+
 
     <xacro:configure_joint joint_name="franka1_fr3_joint1" initial_position="0.0"/>
     <xacro:configure_joint joint_name="franka1_fr3_joint2" initial_position="${-pi/4}"/>
@@ -238,7 +245,7 @@
     <xacro:configure_joint joint_name="franka1_fr3_joint6" initial_position="${pi/2}"/>
     <xacro:configure_joint joint_name="franka1_fr3_joint7" initial_position="${pi/4}"/>
     <xacro:if value="$(eval gazebo and hand)">
-      <xacro:configure_joint joint_name="$franka1_fr3_finger_joint1" initial_position="0.0" />
+      <xacro:configure_joint joint_name="franka1_fr3_finger_joint1" initial_position="0.0" />
     </xacro:if>
 
     <xacro:configure_joint joint_name="franka2_fr3_joint1" initial_position="0.0"/>
@@ -249,8 +256,23 @@
     <xacro:configure_joint joint_name="franka2_fr3_joint6" initial_position="${pi/2}"/>
     <xacro:configure_joint joint_name="franka2_fr3_joint7" initial_position="${pi/4}"/>
     <xacro:if value="$(eval gazebo and hand)">
-      <xacro:configure_joint joint_name="$franka2_fr3_finger_joint1" initial_position="0.0" />
+      <xacro:configure_joint joint_name="franka2_fr3_finger_joint1" initial_position="0.0" />
     </xacro:if>
+
+    <!-- Cartesian velocity interfaces -->
+    <xacro:general_purpose_io prefix="franka1_vx" command_interface="cartesian_velocity" index="0"/>
+    <xacro:general_purpose_io prefix="franka1_vy" command_interface="cartesian_velocity" index="1"/>
+    <xacro:general_purpose_io prefix="franka1_vz" command_interface="cartesian_velocity" index="2"/>
+    <xacro:general_purpose_io prefix="franka1_wx" command_interface="cartesian_velocity" index="3"/>
+    <xacro:general_purpose_io prefix="franka1_wy" command_interface="cartesian_velocity" index="4"/>
+    <xacro:general_purpose_io prefix="franka1_wz" command_interface="cartesian_velocity" index="5"/>   
+
+    <xacro:general_purpose_io prefix="franka2_vx" command_interface="cartesian_velocity" index="0"/>
+    <xacro:general_purpose_io prefix="franka2_vy" command_interface="cartesian_velocity" index="1"/>
+    <xacro:general_purpose_io prefix="franka2_vz" command_interface="cartesian_velocity" index="2"/>
+    <xacro:general_purpose_io prefix="franka2_wx" command_interface="cartesian_velocity" index="3"/>
+    <xacro:general_purpose_io prefix="franka2_wy" command_interface="cartesian_velocity" index="4"/>
+    <xacro:general_purpose_io prefix="franka2_wz" command_interface="cartesian_velocity" index="5"/>
   </ros2_control>
 
   <xacro:if value="$(arg gazebo)">

@@ -17,8 +17,6 @@
 #ifndef FRANKA_BIMANUAL_HW_INTERFACE_HPP
 #define FRANKA_BIMANUAL_HW_INTERFACE_HPP
 
-#include <Eigen/Dense>
-
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/system_interface.hpp"
@@ -35,7 +33,7 @@
 #include <sched.h>
 
 namespace franka {
-
+    
 /** 
 * This class implements the hardware interface for handling multiple 
 * Franka Research 3 (FR3) robots.
@@ -45,7 +43,12 @@ namespace franka {
 class HardwareInterface : public hardware_interface::SystemInterface {
 public:
     /**
-    * Array of doubles used to represent joint states
+    * Array of six doubles used to represent joint velocities
+    */
+    using Vec6       = std::array<double, 6>;
+    
+    /**
+    * Array of seven doubles used to represent joint states
     */
     using Vec7       = std::array<double, 7>;
 
@@ -63,12 +66,6 @@ public:
     * Unique pointer to a mutex
     */
     using MutexPtr   = std::unique_ptr<std::mutex>;
-
-    /**
-    * Pair representing the index of the robot that will modify 
-    * it's interface type and which interface will be modified
-    */
-    using ModeSwitch = std::pair<long, ControlMode>;
     
     /**
     * Enumeration class used to describe controller's possible states.
@@ -77,7 +74,32 @@ public:
         INACTIVE,
         POSITION,
         VELOCITY,
-        EFFORT
+        EFFORT,
+        CARTESIAN_VELOCITY
+    };
+
+    /**
+    * Pair representing the index of the robot that will modify 
+    * it's interface type and which interface will be modified
+    */
+    using ModeSwitch = std::pair<long, ControlMode>;
+    
+    /**
+    * Struct used to populate state values that will be uploaded in the robot's state broadcaster.
+    */
+    struct StateValues { 
+        /**
+        * Joint position values
+        */
+        Vec7 q;
+        /**
+        *Joint velocity values
+        */
+        Vec7 qd;
+        /**
+        * Joint torque values
+        */
+        Vec7 tau;
     };
 
     /**
@@ -96,6 +118,10 @@ public:
         * Joint torque values
         */
         Vec7 tau;
+        /**
+        * Cartesian velocity values
+        */
+        Vec6 xd;
     };
 
     /**
@@ -121,9 +147,23 @@ public:
     * Struct used to handle a Franka robot connection.
     */
     struct RobotUnit {
-        ControlValues if_states, if_cmds;
+        /**
+        * Values of the state to be exported as output in ros
+        */
+        StateValues if_states;
+
+        /**
+        * Control values exported and to be used as input for the robot.
+        */
         ControlValues exported_cmds;
 
+        /**
+        * Control values used from the robot controller. 
+        * These values are copied form exported_cmds in a thread safe way to avoid the usage of
+        * partial read values from the exported interfaces.
+        */
+        ControlValues if_cmds;
+        
         /**
         * Current state of the robot
         */
@@ -158,13 +198,13 @@ public:
         * 
         * This is mainly used to avoid partial readings from exported_cmds.
         */
-        MutexPtr write_mutex   = std::make_unique<std::mutex>();
+        MutexPtr write_mutex = std::make_unique<std::mutex>();
 
         /**
         * Unique pointer to the Robot object of libfranka, that is used to communicate
         * commands and read states.
         */
-        FrankaPtr arm      = nullptr;
+        FrankaPtr arm = nullptr;
 
         /**
         * Unique pointer to the Thread used to handle the robot controller.
@@ -176,6 +216,16 @@ public:
         */
         ControlMode control_mode = ControlMode::INACTIVE;
     };
+
+    /** 
+    * Names of cartesian velocities interfaces 
+    */
+    const std::vector<std::string> cartesian_velocity_interfaces_names = {"vx", "vy", "vz", "wx", "wy", "wz"};
+
+    /**
+    * Name of the cartesian velocity interface
+    */
+    const std::string HW_IF_CART_VELOCITY = "cartesian_velocity";
 
     RCLCPP_SHARED_PTR_DEFINITIONS(HardwareInterface)
 
