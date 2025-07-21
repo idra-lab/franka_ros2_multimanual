@@ -613,7 +613,7 @@ void HardwareInterface::setup_controller(RobotUnit& robot, ControlMode mode) {
                     std::lock_guard<std::mutex> lock(*robot.control_mutex);
                     robot.current_state = state;
 
-                    align_if_states();
+                    align_if_states(robot, state);
 
                     if (robot.first_elbow_update) {
                         // std::lock_guard<std::mutex> lock(*robot.write_mutex);
