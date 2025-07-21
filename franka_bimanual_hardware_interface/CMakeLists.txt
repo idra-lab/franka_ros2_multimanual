@@ -23,6 +23,8 @@ include_directories(
 add_library(
   ${PROJECT_NAME} SHARED
   src/franka_bimanual_hardware_interface.cpp
+  src/franka_wrapper.cpp
+  src/lambda_control.cpp
 )
 
 # Libraries used in the files
