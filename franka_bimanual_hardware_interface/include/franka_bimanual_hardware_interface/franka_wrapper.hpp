@@ -279,7 +279,7 @@ class FrankaRobotWrapper {
     /**
     * RCLCPP Logger
     */
-    rclcpp::Logger logger = rclcpp::get_logger("franka_bimanual_hardware_interface");
+    rclcpp::Logger logger = rclcpp::get_logger("franka_robot_wrapper");
 };
 
 #endif  // FRANKA_WRAPPER_HPP
