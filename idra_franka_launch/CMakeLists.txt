@@ -8,6 +8,12 @@ endif()
 find_package(ament_cmake REQUIRED)
 
 install(
+  PROGRAMS
+    scripts/gripper_test.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
     DIRECTORY config launch urdf rviz
     DESTINATION share/${PROJECT_NAME}
 )

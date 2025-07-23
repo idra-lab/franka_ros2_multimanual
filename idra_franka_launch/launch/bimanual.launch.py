@@ -186,6 +186,8 @@ def generate_launch_description():
 
     rviz_file = os.path.join(get_package_share_directory('idra_franka_launch'), 'rviz', 'bimanual.rviz')
 
+    joint_state_publisher_sources = ["/joint_states", "franka1/franka_gripper/joint_states", "franka2/franka_gripper/joint_states"]
+
     robot_description_dependent_nodes_spawner_opaque_function = OpaqueFunction(
         function=robot_description_dependent_nodes_spawner,
         args=[
@@ -223,7 +225,6 @@ def generate_launch_description():
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
 
-    # TODO: Check real fingers publishers (yes with gazebo, no without)
     spawn = Node(
         package='ros_gz_sim',
         executable='create',
@@ -242,14 +243,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['cartesian_pose_left', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['cartesian_pose_right', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -323,8 +324,22 @@ def generate_launch_description():
         ),
 
         robot_description_dependent_nodes_spawner_opaque_function,
+        
+        # WARN: Gripper works but itroduces delays in controls
         # robot_gripper_left,
         # robot_gripper_right,
+
+        Node(
+            package='joint_state_publisher',
+            executable='joint_state_publisher',
+            name='joint_state_publisher',
+            parameters=[{
+                'source_list': joint_state_publisher_sources,
+                'rate': 50.0,
+                'use_robot_description': False,
+            }],
+            output='screen',
+        ),
 
         # Launch Gazebo
         IncludeLaunchDescription(
