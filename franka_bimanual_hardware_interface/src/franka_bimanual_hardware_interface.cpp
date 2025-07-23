@@ -16,16 +16,6 @@
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
-
-//  ____            _                 _   _
-// |  _ \  ___  ___| | __ _ _ __ __ _| |_(_) ___  _ __  ___
-// | | | |/ _ \/ __| |/ _` | '__/ _` | __| |/ _ \| '_ \/ __|
-// | |_| |  __/ (__| | (_| | | | (_| | |_| | (_) | | | \__ \
-// |____/ \___|\___|_|\__,_|_|  \__,_|\__|_|\___/|_| |_|___/
-//
-
-using franka::HardwareInterface;
-
 //  ____   ____ _     ____ ____  ____    _     _  __       ____           _
 // |  _ \ / ___| |   / ___|  _ \|  _ \  | |   (_)/ _| ___ / ___|   _  ___| | ___
 // | |_) | |   | |  | |   | |_) | |_) | | |   | | |_ / _ \ |  | | | |/ __| |/ _ \
@@ -105,7 +95,7 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         RCLCPP_INFO(get_logger(), "Connection with arm %s @ %s", 
             arms[i].name.c_str(), arms[i].ip.c_str());
 
-        arms[i].arm = std::make_unique<Robot>(arms[i].ip, rt_config);
+        arms[i].arm = std::make_unique<franka::Robot>(arms[i].ip, rt_config);
         //TODO? setDefaultBehavior(frk)
         
         // Controller state
@@ -519,5 +509,5 @@ HardwareInterface::perform_command_mode_switch(
 #include <pluginlib/class_list_macros.hpp>
 
 PLUGINLIB_EXPORT_CLASS(
-    franka::HardwareInterface, hardware_interface::SystemInterface
+    HardwareInterface, hardware_interface::SystemInterface
 );

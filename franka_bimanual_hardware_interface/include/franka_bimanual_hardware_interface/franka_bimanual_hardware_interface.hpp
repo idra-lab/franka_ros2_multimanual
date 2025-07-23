@@ -42,9 +42,6 @@
 *
 * @author Alessandro Moscatelli
 */
-
-namespace franka {
-
 class HardwareInterface : public hardware_interface::SystemInterface {
 public:
     /**
@@ -258,7 +255,5 @@ private:
     */
     bool limit_override = false;
 };
-
-}
 
 #endif  // FRANKA_BIMANUAL_HW_INTERFACE_HPP
