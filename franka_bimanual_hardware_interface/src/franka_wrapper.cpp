@@ -66,3 +66,22 @@ bool FrankaRobotWrapper::is_cartesian() const {
     return control_mode == ControlMode::CARTESIAN_POSITION ||
            control_mode == ControlMode::CARTESIAN_VELOCITY;
 }
+
+std::string FrankaRobotWrapper::control_to_string(const ControlMode& mode) {
+    switch(mode) { 
+        case ControlMode::INACTIVE:
+        return "inactive";
+        case ControlMode::POSITION:
+        return "position";
+        case ControlMode::VELOCITY:
+        return "velocity";
+        case ControlMode::EFFORT:
+        return "effort";
+        case ControlMode::CARTESIAN_POSITION:
+        return "cartesian position";
+        case ControlMode::CARTESIAN_VELOCITY:
+        return "cartesian velocity";
+        default:
+        return "???";
+    }
+}

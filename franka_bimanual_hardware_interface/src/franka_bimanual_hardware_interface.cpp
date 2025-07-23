@@ -1,11 +1,12 @@
 #include "franka_bimanual_hardware_interface/franka_bimanual_hardware_interface.hpp"
 
 #include <array>
+#include <exception>
+#include <stdexcept>
 #include <algorithm>
 #include <ctime>
 #include <fmt/format.h>
 #include <memory>
-#include <stdexcept>
 #include <regex>    
 
 #include "rclcpp/duration.hpp"
@@ -360,76 +361,20 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
     const std::vector<std::string>& start_interfaces,
     const std::vector<std::string>& stop_interfaces
 ) {
-    mode_switch_plan.activations.clear();
-    mode_switch_plan.deactivations.clear();
-    mode_switch_plan.elbow_activations.clear();
-    mode_switch_plan.elbow_deactivations.clear();
-
-    if (who_and_what_switched(stop_interfaces, mode_switch_plan.deactivations, mode_switch_plan.elbow_deactivations) == hardware_interface::return_type::ERROR) {
+    try {
+        mode_switch_plan = std::make_unique<ModeSwitchPlan>(start_interfaces, stop_interfaces, arms);
+    } catch (std::runtime_error& e) {
+        RCLCPP_ERROR(get_logger(), "Error creating the switch plan: %s", e.what());
         return hardware_interface::return_type::ERROR;
     }
 
-    if (who_and_what_switched(start_interfaces, mode_switch_plan.activations, mode_switch_plan.elbow_activations) == hardware_interface::return_type::ERROR) {
-        return hardware_interface::return_type::ERROR;
-    }
-
-    // Lambda to check if an arm is being activated
-    const auto is_being_activated = [&](long arm_index) -> bool {
-        return std::any_of(
-            mode_switch_plan.activations.begin(),
-            mode_switch_plan.activations.end(),
-            [&](const auto& item) { return item.first == arm_index; }
-        );
-    };
-
-    // Lambda to check if an arm is being deactivated
-    const auto is_being_deactivated = [&](long arm_index) -> bool {
-        return std::any_of(
-            mode_switch_plan.deactivations.begin(),
-            mode_switch_plan.deactivations.end(),
-            [&](const auto& item) { return item.first == arm_index; }
-        );
-    };
-
-    const auto is_activating_cartesian = [&](long arm_index) -> bool {
-        return std::any_of(
-            mode_switch_plan.deactivations.begin(),
-            mode_switch_plan.deactivations.end(),
-            [&](const auto& item) { 
-                return 
-                    item.first == arm_index && (
-                        item.second == ControlMode::CARTESIAN_POSITION || 
-                        item.second == ControlMode::CARTESIAN_VELOCITY
-                    ); 
-            }
-        );
-    };
-
-    // Lambda to check if an arm elbow is being activated
-    const auto is_elbow_being_activated = [&](long arm_index) -> bool {
-        return std::any_of(
-            mode_switch_plan.elbow_activations.begin(),
-            mode_switch_plan.elbow_activations.end(),
-            [&](const auto& item) { return item == arm_index; }
-        );
-    };
-
-    // Lambda to check if an arm elbow is being deactivated
-    const auto is_elbow_being_deactivated = [&](long arm_index) -> bool {
-        return std::any_of(
-            mode_switch_plan.elbow_deactivations.begin(),
-            mode_switch_plan.elbow_deactivations.end(),
-            [&](const auto& item) { return item == arm_index; }
-        );
-    };
-
-    for (const auto& change : mode_switch_plan.activations) {
+    for (const auto& change : mode_switch_plan->activations) {
         const RobotUnit& arm = arms[change.first];
 
         // Check: Are there any activations on robot that are not planned to be deactivated?
-        if (arm.control_mode != ControlMode::INACTIVE && !is_being_deactivated(change.first)) {
+        if (arm.control_mode != ControlMode::INACTIVE && !mode_switch_plan->is_being_deactivated(change.first)) {
             RCLCPP_ERROR(get_logger(), "%s already has an active interface %s, that is not planned to be deactivated",
-                arm.name.c_str(), control_to_string(arm.control_mode).c_str()
+                arm.name.c_str(), FrankaRobotWrapper::control_to_string(arm.control_mode).c_str()
             );
 
             return hardware_interface::return_type::ERROR;
@@ -437,27 +382,27 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
 
         // Check: Are there any elbow interfaces that will be active on erratic interface types?
         if (
-            ( (change.second != ControlMode::CARTESIAN_POSITION && change.second != ControlMode::CARTESIAN_VELOCITY) && is_elbow_being_activated(change.first) ) ||
-            ( (change.second != ControlMode::CARTESIAN_POSITION && change.second != ControlMode::CARTESIAN_VELOCITY) && arm.elbow_control && !is_elbow_being_deactivated(change.first) )
+            ( (change.second != ControlMode::CARTESIAN_POSITION && change.second != ControlMode::CARTESIAN_VELOCITY) && mode_switch_plan->is_elbow_being_activated(change.first) ) ||
+            ( (change.second != ControlMode::CARTESIAN_POSITION && change.second != ControlMode::CARTESIAN_VELOCITY) && arm.elbow_control && !mode_switch_plan->is_elbow_being_deactivated(change.first) )
         ) {
             RCLCPP_ERROR(get_logger(), "%s is trying to activate an elbow interface on an erratic controller: %s (to be activated)",
-                arm.name.c_str(), control_to_string(change.second).c_str()
+                arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()
             );
 
             return hardware_interface::return_type::ERROR;
         }
     }
 
-    for (const long& change : mode_switch_plan.elbow_activations) { 
+    for (const long& change : mode_switch_plan->elbow_activations) { 
         const RobotUnit& arm = arms[change]; 
 
         // Check: Are there any elbow interfaces that will be activated on erratic interface types on unchanged robots?
         if (
             (arm.control_mode != ControlMode::CARTESIAN_POSITION && arm.control_mode != ControlMode::CARTESIAN_VELOCITY) && 
-            !is_being_activated(change) && is_elbow_being_activated(change) 
+            !mode_switch_plan->is_being_activated(change) && mode_switch_plan->is_elbow_being_activated(change) 
         ) {
             RCLCPP_ERROR(get_logger(), "%s is trying to activate an elbow interface on an erratic controller: %s (currently active)",
-                arm.name.c_str(), control_to_string(arm.control_mode).c_str()
+                arm.name.c_str(), FrankaRobotWrapper::control_to_string(arm.control_mode).c_str()
             );
 
             return hardware_interface::return_type::ERROR;
@@ -473,7 +418,7 @@ HardwareInterface::perform_command_mode_switch(
         const std::vector<std::string>& stop_interfaces
 ) {
     // Deactivations
-    for (const auto& change : mode_switch_plan.elbow_deactivations) {
+    for (const auto& change : mode_switch_plan->elbow_deactivations) {
         RobotUnit& arm = arms[change];
 
         RCLCPP_INFO(get_logger(), "%s will shut down elbow interface", 
@@ -487,11 +432,11 @@ HardwareInterface::perform_command_mode_switch(
         );
     }
 
-    for (const auto& change : mode_switch_plan.deactivations) {
+    for (const auto& change : mode_switch_plan->deactivations) {
         RobotUnit& arm = arms[change.first];
 
         RCLCPP_INFO(get_logger(), "%s will shut down interface %s", 
-            arm.name.c_str(), control_to_string(change.second).c_str()
+            arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()
         );
 
         arm.reset_controller();
@@ -502,7 +447,7 @@ HardwareInterface::perform_command_mode_switch(
     }
 
     // Activations
-    for (const auto& change : mode_switch_plan.elbow_activations) {
+    for (const auto& change : mode_switch_plan->elbow_activations) {
         RobotUnit& arm = arms[change];
 
         RCLCPP_INFO(get_logger(), "%s will activate elbow interface", 
@@ -517,11 +462,11 @@ HardwareInterface::perform_command_mode_switch(
         );
     }
 
-    for (const auto& change : mode_switch_plan.activations) {
+    for (const auto& change : mode_switch_plan->activations) {
         RobotUnit& arm = arms[change.first];
 
         RCLCPP_INFO(get_logger(), "%s will activate %s interface", 
-            arm.name.c_str(), control_to_string(change.second).c_str()
+            arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()
         );
 
         if (change.second == ControlMode::POSITION) {
@@ -560,99 +505,6 @@ HardwareInterface::perform_command_mode_switch(
 // |  __/| |  | |\ V / (_| | ||  __/
 // |_|   |_|  |_| \_/ \__,_|\__\___|
 //
-hardware_interface::return_type HardwareInterface::who_and_what_switched(
-    const std::vector<std::string>& interfaces,
-    std::vector<ModeSwitch>& changes,
-    std::vector<long>&       elbow_changes
-) {
-
-    for (const std::string& iface : interfaces) {
-        long who = -1;
-        bool is_elbow = false;
-        ControlMode what = ControlMode::INACTIVE;
-
-        for (long i = 0; i < arms.size(); ++i) {
-            if (iface.find(arms[i].name) != std::string::npos) {
-                who = i;
-            }
-        }
-
-        if (who < 0) {
-            RCLCPP_ERROR(get_logger(), "An unknown robot tried to modifty an interface");
-            return hardware_interface::return_type::ERROR;
-        }
-
-        if (iface.find("/position") != std::string::npos) {
-            what = ControlMode::POSITION;
-        } else if (iface.find("/velocity") != std::string::npos) {
-            what = ControlMode::VELOCITY;
-        } else if (iface.find("/effort") != std::string::npos) {
-            what = ControlMode::EFFORT;
-        } else if (iface.find("/cartesian_pose_command") != std::string::npos) {
-            what = ControlMode::CARTESIAN_POSITION;
-        } else if (iface.find("/cartesian_velocity") != std::string::npos) {
-            what = ControlMode::CARTESIAN_VELOCITY;
-        } else if (iface.find("/elbow_command") != std::string::npos) {
-            is_elbow = true;
-        } else {
-            RCLCPP_ERROR(get_logger(), "%s tried to modify an unsupported interface", 
-                arms[who].name.c_str()
-            );
-            return hardware_interface::return_type::ERROR; 
-        }
-
-        if (!is_elbow) {
-            bool already_in = false;
-            for (const auto& change : changes) {
-                if (change.first == who) {
-                    already_in = true;
-                    if (change.second != what) {
-                        RCLCPP_ERROR(get_logger(), "%s tried to modify %s interface, but it has modified %s", 
-                            arms[who].name.c_str(), control_to_string(what).c_str(), control_to_string(change.second).c_str()
-                        );
-                        return hardware_interface::return_type::ERROR;   
-                    }
-                }
-            }
-            
-            if (!already_in) {
-                changes.push_back(std::pair(who, what));
-            } 
-        } else {
-            bool already_in = false;
-            for (const auto& change : elbow_changes) {
-                if (change == who) {
-                    already_in = true;
-                }
-            }
-            
-            if (!already_in) {
-                elbow_changes.push_back(who);
-            } 
-        }
-    }
-
-    return hardware_interface::return_type::OK;
-}
-
-std::string HardwareInterface::control_to_string(const ControlMode& mode) {
-    switch(mode) { 
-        case ControlMode::INACTIVE:
-        return "inactive";
-        case ControlMode::POSITION:
-        return "position";
-        case ControlMode::VELOCITY:
-        return "velocity";
-        case ControlMode::EFFORT:
-        return "effort";
-        case ControlMode::CARTESIAN_POSITION:
-        return "cartesian position";
-        case ControlMode::CARTESIAN_VELOCITY:
-        return "cartesian velocity";
-        default:
-        return "???";
-    }
-}
 
 //  _____                       _
 // | ____|_  ___ __   ___  _ __| |_

@@ -25,6 +25,7 @@ add_library(
   src/franka_bimanual_hardware_interface.cpp
   src/franka_wrapper.cpp
   src/lambda_control.cpp
+  src/mode_switch_plan.cpp
 )
 
 # Libraries used in the files

@@ -34,6 +34,7 @@
 #include "franka/active_control_base.h"
 
 #include "franka_bimanual_hardware_interface/franka_wrapper.hpp"
+#include "franka_bimanual_hardware_interface/mode_switch_plan.hpp"
     
 /** 
 * This class implements the hardware interface for handling multiple 
@@ -49,36 +50,6 @@ public:
     using RobotUnit = FrankaRobotWrapper;
 
     using ControlMode = FrankaRobotWrapper::ControlMode;
-
-    /**
-    * Pair representing the index of the robot that will modify 
-    * it's interface type and which interface will be modified
-    */
-    using ModeSwitch = std::pair<long, ControlMode>;
-
-    /**
-    * This object used as helper to perform efficiently the prepare_command_mode_switch and the 
-    * perform_command_mode_switch.
-    *
-    * It is populated by a two pairs of vectors: the first pair describe 
-    * which robot is activating or deactivating a particular interface. 
-    * The second pair contains the indexes of the robot that are activating
-    * or deactiviting their elbow interface.
-    */
-    struct ModeSwitchPlan {
-        /**
-        * Vector describing which interfaces will be activated
-        */
-        std::vector<ModeSwitch> activations;
-
-        /**
-        * Vector describing which interfaces will be deactivated
-        */
-        std::vector<ModeSwitch> deactivations;
-
-        std::vector<long> elbow_activations;
-        std::vector<long> elbow_deactivations;
-    };
 
     /**
     * Identification name of the cartesian velocity interface
@@ -269,15 +240,6 @@ public:
     */
     rclcpp::Logger& get_logger() { return logger; }
 
-    /**
-    * Converts a ControlMode into a string
-    *
-    * @param mode Mode to be converted
-    *  
-    * @return String representing the control mode
-    */
-    std::string control_to_string(const ControlMode& mode);
-
 private:
     /**
     * RCLCPP Logger
@@ -291,31 +253,14 @@ private:
 
     /**
     * Object used to store command switches between functions
-    */
-    ModeSwitchPlan mode_switch_plan;  
+    */  
+    std::unique_ptr<ModeSwitchPlan> mode_switch_plan;  
 
     /**
     * Parameter used to regulate if franka::limitRate should be called in the control loops.
     * If set to true, limitRate function will NOT be used.
     */
     bool limit_override = false;
-
-    /**
-    * Function used to elaborate which interfaces will be changing operational mode.
-    *
-    * @param interfaces    Vector with interface list to be parsed
-    * @param changes       Output vector with robot index and relative operational mode, if changed
-    * @param elbow_changes Output vector with robot index if changed elbow interface
-    *
-    * @return Error, if some unknown robot or interface type are found, or there are inconsistent 
-    * modifications to the same robot (e.g. a robot tries to activate both position and velocity),
-    * else the function returns ok.
-    */
-    hardware_interface::return_type who_and_what_switched(
-        const std::vector<std::string>& interfaces,
-        std::vector<ModeSwitch>& changes, 
-        std::vector<long>&       elbow_changes
-    );
 };
 
 }
