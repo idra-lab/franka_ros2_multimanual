@@ -139,6 +139,8 @@
                       use_fake_hardware="$(arg use_fake_hardware)"
                       fake_sensor_commands="$(arg fake_sensor_commands)"
                       gazebo_effort="$(arg gazebo_effort)"
+
+                      rpy_ee="0 0 ${-pi/4}"
                       >
   </xacro:franka_robot>
 
@@ -174,6 +176,8 @@
                       use_fake_hardware="$(arg use_fake_hardware)"
                       fake_sensor_commands="$(arg fake_sensor_commands)"
                       gazebo_effort="$(arg gazebo_effort)"
+
+                      rpy_ee="0 0 ${-pi/4}"
                       >
   </xacro:franka_robot>
 
