@@ -29,6 +29,16 @@
 #include "rclcpp/macros.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 
+/**
+ * This namespace collects the function used to start the control loop of a FR3 robot.
+ * 
+ * All the function return a std::function<void()> that is used in @link{FrankaRobotWrapper}
+ * by the control thread of the robot. 
+ * The all the lambdas used returned by these funcitons simply call robot.control(...)
+ * with some specifically implemented robot control. 
+ * 
+ * @author Alessandro Moscatelli
+ */
 namespace LambdaControl {
 
     std::function<void()> startJointPositionControl(FrankaRobotWrapper& robot, bool limit_override);
