@@ -67,7 +67,7 @@ HardwareInterface::on_init (
     auto name_it = name_begin;
     auto ip_it = ip_begin;
     for ( long i = 0; i < ip_size; ++i ) {
-        RobotUnit frk;
+        FrankaRobotWrapper frk;
 
         frk.name = name_it->str();
         frk.ip = ip_it->str();
@@ -109,7 +109,7 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         //TODO? setDefaultBehavior(frk)
         
         // Controller state
-        arms[i].control_mode = ControlMode::INACTIVE;
+        arms[i].control_mode = FrankaRobotWrapper::ControlMode::INACTIVE;
 
         RCLCPP_INFO(get_logger(), "Done!");
     }
@@ -191,11 +191,11 @@ HardwareInterface::on_error(const rclcpp_lifecycle::State& prev_state) {
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    for (RobotUnit& arm : arms) {
+    for (FrankaRobotWrapper& arm : arms) {
         arm.reset_controller();
     }
 
-    for (const RobotUnit& arm : arms) {
+    for (const FrankaRobotWrapper& arm : arms) {
         RCLCPP_INFO(get_logger(), "Error dump of %s", 
             arm.name.c_str()
         );
@@ -330,7 +330,7 @@ hardware_interface::return_type
 HardwareInterface::read(const rclcpp::Time& /* time */, const rclcpp::Duration& /* period */) {
     // This is used only when there is no controller loaded
 
-    for (RobotUnit& robot : arms) {
+    for (FrankaRobotWrapper& robot : arms) {
         if (!robot.control) {
             std::lock_guard<std::mutex> lock(*robot.control_mutex);
             robot.current_state = robot.arm->readOnce();
@@ -346,7 +346,7 @@ hardware_interface::return_type
 HardwareInterface::write(const rclcpp::Time& /* time */, const rclcpp::Duration& period ) {
     // Copies the command from the exported interfaces to the command used by the robot to avoid concurrency problems
 
-    for (RobotUnit& robot : arms) {
+    for (FrankaRobotWrapper& robot : arms) {
         if (robot.control) {
             std::lock_guard<std::mutex> lock(*robot.write_mutex);
 
@@ -361,6 +361,8 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
     const std::vector<std::string>& start_interfaces,
     const std::vector<std::string>& stop_interfaces
 ) {
+    using ControlMode = FrankaRobotWrapper::ControlMode;
+
     try {
         mode_switch_plan = std::make_unique<ModeSwitchPlan>(start_interfaces, stop_interfaces, arms);
     } catch (std::runtime_error& e) {
@@ -369,7 +371,7 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
     }
 
     for (const auto& change : mode_switch_plan->activations) {
-        const RobotUnit& arm = arms[change.first];
+        const FrankaRobotWrapper& arm = arms[change.first];
 
         // Check: Are there any activations on robot that are not planned to be deactivated?
         if (arm.control_mode != ControlMode::INACTIVE && !mode_switch_plan->is_being_deactivated(change.first)) {
@@ -394,7 +396,7 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
     }
 
     for (const long& change : mode_switch_plan->elbow_activations) { 
-        const RobotUnit& arm = arms[change]; 
+        const FrankaRobotWrapper& arm = arms[change]; 
 
         // Check: Are there any elbow interfaces that will be activated on erratic interface types on unchanged robots?
         if (
@@ -417,9 +419,11 @@ HardwareInterface::perform_command_mode_switch(
         const std::vector<std::string>& start_interfaces,
         const std::vector<std::string>& stop_interfaces
 ) {
+    using ControlMode = FrankaRobotWrapper::ControlMode;
+
     // Deactivations
     for (const auto& change : mode_switch_plan->elbow_deactivations) {
-        RobotUnit& arm = arms[change];
+        FrankaRobotWrapper& arm = arms[change];
 
         RCLCPP_INFO(get_logger(), "%s will shut down elbow interface", 
             arm.name.c_str()
@@ -433,7 +437,7 @@ HardwareInterface::perform_command_mode_switch(
     }
 
     for (const auto& change : mode_switch_plan->deactivations) {
-        RobotUnit& arm = arms[change.first];
+        FrankaRobotWrapper& arm = arms[change.first];
 
         RCLCPP_INFO(get_logger(), "%s will shut down interface %s", 
             arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()
@@ -448,7 +452,7 @@ HardwareInterface::perform_command_mode_switch(
 
     // Activations
     for (const auto& change : mode_switch_plan->elbow_activations) {
-        RobotUnit& arm = arms[change];
+        FrankaRobotWrapper& arm = arms[change];
 
         RCLCPP_INFO(get_logger(), "%s will activate elbow interface", 
             arm.name.c_str()
@@ -463,7 +467,7 @@ HardwareInterface::perform_command_mode_switch(
     }
 
     for (const auto& change : mode_switch_plan->activations) {
-        RobotUnit& arm = arms[change.first];
+        FrankaRobotWrapper& arm = arms[change.first];
 
         RCLCPP_INFO(get_logger(), "%s will activate %s interface", 
             arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()

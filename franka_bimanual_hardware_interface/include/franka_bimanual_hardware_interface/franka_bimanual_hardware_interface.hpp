@@ -47,10 +47,6 @@ namespace franka {
 
 class HardwareInterface : public hardware_interface::SystemInterface {
 public:
-    using RobotUnit = FrankaRobotWrapper;
-
-    using ControlMode = FrankaRobotWrapper::ControlMode;
-
     /**
     * Identification name of the cartesian velocity interface
     */
@@ -249,7 +245,7 @@ private:
     /**
     * Vector used to handle N connection objects with N franka arms
     */
-    std::vector<RobotUnit> arms; 
+    std::vector<FrankaRobotWrapper> arms; 
 
     /**
     * Object used to store command switches between functions
