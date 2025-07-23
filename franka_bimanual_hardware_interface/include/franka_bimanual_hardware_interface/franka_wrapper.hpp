@@ -185,11 +185,11 @@ class FrankaRobotWrapper {
     * if_cmds and exported_cmds must be initialized with the same value of 
     * if_states to avoid errors. 
     */
-    bool first_joint_position_update = true;
+    bool first_joint_position_update = false;
 
-    bool first_cartesian_position_update = true;
+    bool first_cartesian_position_update = false;
 
-    bool first_elbow_update = true;
+    bool first_elbow_update = false;
 
     /**
     * Name of the robot
@@ -256,6 +256,8 @@ class FrankaRobotWrapper {
     * @param robot Robot that is deactivating a controller
     */
     void reset_controller();  
+
+    bool is_cartesian() const;
     
     /**
     * Get RCLCPP logger object

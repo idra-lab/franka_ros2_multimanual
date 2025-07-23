@@ -39,6 +39,12 @@ controller_manager:
     cartesian_velocity_right:
       type: forward_command_controller/ForwardCommandController
 
+    elbow_left:
+      type: forward_command_controller/ForwardCommandController
+
+    elbow_right:
+      type: forward_command_controller/ForwardCommandController
+
 joint_position_left:
   ros__parameters:
     joints:
@@ -192,3 +198,17 @@ cartesian_velocity_right:
       - franka1_wy
       - franka1_wz
     interface_name: cartesian_velocity
+
+elbow_left:
+  ros__parameters:
+    joints:
+      - franka2_joint_3_position
+      - franka2_joint_4_sign
+    interface_name: elbow_command
+
+elbow_right:
+  ros__parameters:
+    joints:
+      - franka1_joint_3_position
+      - franka1_joint_4_sign
+    interface_name: elbow_command

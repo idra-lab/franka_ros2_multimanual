@@ -61,3 +61,8 @@ void FrankaRobotWrapper::reset_controller() {
 
     arm->stop();
 }
+
+bool FrankaRobotWrapper::is_cartesian() const {
+    return control_mode == ControlMode::CARTESIAN_POSITION ||
+           control_mode == ControlMode::CARTESIAN_VELOCITY;
+}
