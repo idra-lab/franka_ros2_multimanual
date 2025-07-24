@@ -32,7 +32,7 @@
 /**
  * This namespace collects the function used to start the control loop of a FR3 robot.
  * 
- * All the function return a std::function<void()> that is used in @link{FrankaRobotWrapper}
+ * All the function return a std::function<void()> that is used in @link FrankaRobotWrapper @endlink
  * by the control thread of the robot. 
  * The all the lambdas used returned by these funcitons simply call robot.control(...)
  * with some specifically implemented robot control. 
@@ -41,14 +41,54 @@
  */
 namespace LambdaControl {
 
+    /**
+     * Return a function that, if called, starts a joint position control on the robot.
+     * 
+     * @param robot Robot where the controller will be activated
+     * @param limit_override If set to False, the controller will use franka::limitRate.
+     * 
+     * @return Lambda function used to by the control thread.
+     */
     std::function<void()> startJointPositionControl(FrankaRobotWrapper& robot, bool limit_override);
 
+    /**
+     * Return a function that, if called, starts a joint velocity control on the robot.
+     * 
+     * @param robot Robot where the controller will be activated
+     * @param limit_override If set to False, the controller will use franka::limitRate.
+     * 
+     * @return Lambda function used to by the control thread.
+     */
     std::function<void()> startJointVelocityControl(FrankaRobotWrapper& robot, bool limit_override);
 
+    /**
+     * Return a function that, if called, starts a joint torque control on the robot.
+     * 
+     * @param robot Robot where the controller will be activated
+     * @param limit_override If set to False, the controller will use franka::limitRate.
+     * 
+     * @return Lambda function used to by the control thread.
+     */
     std::function<void()> startJointEffortControl(FrankaRobotWrapper& robot, bool limit_override);
 
+    /**
+     * Return a function that, if called, starts a cartesian pose control on the robot.
+     * 
+     * @param robot Robot where the controller will be activated
+     * @param limit_override If set to False, the controller will use franka::limitRate.
+     * 
+     * @return Lambda function used to by the control thread.
+     */
     std::function<void()> startCartesianPositionControl(FrankaRobotWrapper& robot, bool limit_override);
     
+    /**
+     * Return a function that, if called, starts a cartesian position control on the robot.
+     * 
+     * @param robot Robot where the controller will be activated
+     * @param limit_override If set to False, the controller will use franka::limitRate.
+     * 
+     * @return Lambda function used to by the control thread.
+     */
     std::function<void()> startCartesianVelocityControl(FrankaRobotWrapper& robot, bool limit_override);
     
 }

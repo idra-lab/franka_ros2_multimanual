@@ -49,13 +49,13 @@ public:
 using ModeSwitch = std::pair<long, FrankaRobotWrapper::ControlMode>;
 
 /**
-* Vector describing which interfaces will be activated.
-*/
+ * Vector describing which interfaces will be activated.
+ */
 std::vector<ModeSwitch> activations;
 
 /**
-* Vector describing which interfaces will be deactivated.
-*/
+ * Vector describing which interfaces will be deactivated.
+ */
 std::vector<ModeSwitch> deactivations;
 
 /**
@@ -69,16 +69,16 @@ std::vector<long> elbow_activations;
 std::vector<long> elbow_deactivations;
 
 /**
-* TODO
-*
-* @param interfaces    Vector with interface list to be parsed
-* @param robots        Vector with the list of robots to check
-* @param changes       Output vector with robot index and relative operational mode, if changed
-* @param elbow_changes Output vector with robot index if changed elbow interface
-*
-* @throw runtime_error if some unknown robot or interface type are found, or there are inconsistent 
-* modifications to the same robot (e.g. a robot tries to activate both position and velocity).
-*/
+ * This constructor parses the starting and stopping interfaces, 
+ * populating the class' vectors.
+ *
+ * @param start_interfaces Vector listing the interfaces that will be started
+ * @param stop_interfaces  Vector listing the interfaces that will be stopped
+ * @param robots           Vector containing the robots
+ *
+ * @throw runtime_error if some unknown robot or interface type are found, or there are inconsistent 
+ * modifications to the same robot (e.g. a robot tries to activate both position and velocity).
+ */
 ModeSwitchPlan(
     const std::vector<std::string>& start_interfaces, 
     const std::vector<std::string>& stop_interfaces,
@@ -86,32 +86,81 @@ ModeSwitchPlan(
 );
 ~ModeSwitchPlan() = default;
 
+/**
+ * Tells if the robot will activate an interface.
+ * 
+ * @param robot_index Index of the robot referring to the arms array
+ * 
+ * @return True if the robot is activating an interface, False otherwise
+ */
 bool is_being_activated(long robot_index) const;
+
+/**
+ * Tells if the robot will activate an cartesian interface, either pose or cartesian.
+ * 
+ * @param robot_index Index of the robot referring to the arms array
+ * 
+ * @return True if the robot is activating a cartesian interface, False otherwise
+ */
 bool is_activating_cartesian(long robot_index) const;
+
+/**
+ * Tells what type of control is the robot activating.
+ * 
+ * @param robot_index Index of the robot referring to the arms array
+ * 
+ * @return @link FrankaRobotWrapper::ControlMode Control mode @endlink of the robot, if found
+ * 
+ * @throws range_error if the robot with relative index is not found
+ */
 FrankaRobotWrapper::ControlMode what_is_being_activated(long robot_index) const;
+
+/**
+ * Tells if the robot will deactivate an interface.
+ * 
+ * @param robot_index Index of the robot referring to the arms array
+ * 
+ * @return True if the robot is deactivating an interface, False otherwise
+ */
 bool is_being_deactivated(long robot_index) const;
 
+/**
+ * Tells if the robot will activate an elbow interface.
+ * 
+ * @param robot_index Index of the robot referring to the arms array
+ * 
+ * @return True if the robot is activating an elbow interface, False otherwise
+ */
 bool is_elbow_being_activated(long robot_index) const;
+
+/**
+ * Tells if the robot will deactivate an elbow interface.
+ * 
+ * @param robot_index Index of the robot referring to the arms array
+ * 
+ * @return True if the robot is deactivating an elbow interface, False otherwise
+ */
 bool is_elbow_being_deactivated(long robot_index) const;
 
 private:
-    /**
-    * Function used to elaborate which interfaces will be changing operational mode.
-    *
-    * @param interfaces    Vector with interface list to be parsed
-    * @param robots        Vector with the list of robots to check
-    * @param changes       Output vector with robot index and relative operational mode, if changed
-    * @param elbow_changes Output vector with robot index if changed elbow interface
-    *
-    * @throw runtime_error if some unknown robot or interface type are found, or there are inconsistent 
-    * modifications to the same robot (e.g. a robot tries to activate both position and velocity).
-    */
-    void who_and_what_switched(
-        const std::vector<std::string>& interfaces,
-        const std::vector<FrankaRobotWrapper>& robots,
-        std::vector<ModeSwitch>& changes, 
-        std::vector<long>&       elbow_changes
-    );
+/**
+ * Function used to elaborate which interfaces will be changing operational mode.
+ *
+ * @param interfaces    Vector with interface list to be parsed
+ * @param robots        Vector with the list of robots to check
+ * @param changes       Output vector with robot index and relative operational mode, if changed
+ * @param elbow_changes Output vector with robot index if changed elbow interface
+ *
+ * @throw runtime_error if some unknown robot or interface type are found, or there are inconsistent 
+ * modifications to the same robot (e.g. a robot tries to activate both position and velocity).
+ */
+void who_and_what_switched(
+    const std::vector<std::string>& interfaces,
+    const std::vector<FrankaRobotWrapper>& robots,
+    std::vector<ModeSwitch>& changes, 
+    std::vector<long>&       elbow_changes
+);
+
 };
 
 #endif  // MODE_SWITCH_PLAN_HPP
