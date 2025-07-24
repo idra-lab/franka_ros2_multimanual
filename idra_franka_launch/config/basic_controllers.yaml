@@ -1,8 +1,11 @@
 controller_manager:
   ros__parameters:
-    thread_priority: 99
+    thread_priority: 98
     update_rate: 1000  # Hz
   
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+      
     joint_position_left:
       type: position_controllers/JointGroupPositionController
 
@@ -23,9 +26,6 @@ controller_manager:
       
     joint_effort_right:
       type: effort_controllers/JointGroupEffortController
-
-    joint_state_broadcaster:
-      type: joint_state_broadcaster/JointStateBroadcaster
 
     cartesian_pose_left:
       type: forward_command_controller/ForwardCommandController
