@@ -1,4 +1,4 @@
-#include "franka_bimanual_hardware_interface/franka_bimanual_hardware_interface.hpp"
+#include "franka_mm_hardware_interface/franka_mm_hardware_interface.hpp"
 
 #include <array>
 #include <exception>

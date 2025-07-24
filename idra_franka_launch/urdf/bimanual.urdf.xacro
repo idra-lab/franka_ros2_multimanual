@@ -254,7 +254,7 @@
     <xacro:general_purpose_io prefix="${robot_name}_wz" command_interface="cartesian_velocity" index="5"/>   
   </xacro:macro>
 
-  <ros2_control name="FrankaBimanualHardwareInterface" type="system">
+  <ros2_control name="FrankaMultimanualHardwareInterface" type="system">
     <hardware>
       <xacro:if value="$(arg use_fake_hardware)">
         <plugin>fake_components/GenericSystem</plugin>
@@ -267,7 +267,7 @@
       </xacro:if>
 
       <xacro:if value="$(eval not use_fake_hardware and not gazebo)">
-        <plugin>franka_bimanual_hardware_interface/FrankaBimanualHardwareInterface</plugin>
+        <plugin>franka_mm_hardware_interface/FrankaMultimanualHardwareInterface</plugin>
         <param name="robot_names">franka1,franka2</param>
         <param name="robot_ips">$(arg franka1_ip),$(arg franka2_ip)</param>
         <param name="limit_override">$(arg limit_override)</param>

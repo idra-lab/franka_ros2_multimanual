@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>franka_bimanual_hardware_interface</name>
+  <name>franka_mm_hardware_interface</name>
   <version>0.0.0</version>
-  <description>Bimanual Franka robot hardware interface</description>
+  <description>Multimanual Franka robot hardware interface</description>
   <maintainer email="a.moscatelli@studenti.unitn.it">Alessandro Moscatelli</maintainer>
   <license>TODO: License declaration</license>
 

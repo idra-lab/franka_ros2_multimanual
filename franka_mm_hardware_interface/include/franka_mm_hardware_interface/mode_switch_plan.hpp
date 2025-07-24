@@ -18,7 +18,7 @@
 #ifndef MODE_SWITCH_PLAN_HPP
 #define MODE_SWITCH_PLAN_HPP
 
-#include "franka_bimanual_hardware_interface/franka_wrapper.hpp"
+#include "franka_mm_hardware_interface/franka_wrapper.hpp"
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"

@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef FRANKA_BIMANUAL_HW_INTERFACE_HPP
-#define FRANKA_BIMANUAL_HW_INTERFACE_HPP
+#ifndef FRANKA_MM_HW_INTERFACE_HPP
+#define FRANKA_MM_HW_INTERFACE_HPP
 
 #include <thread>
 #include <pthread.h>
@@ -33,8 +33,8 @@
 #include "franka/robot.h"
 #include "franka/active_control_base.h"
 
-#include "franka_bimanual_hardware_interface/franka_wrapper.hpp"
-#include "franka_bimanual_hardware_interface/mode_switch_plan.hpp"
+#include "franka_mm_hardware_interface/franka_wrapper.hpp"
+#include "franka_mm_hardware_interface/mode_switch_plan.hpp"
     
 /** 
 * This class implements the hardware interface for handling multiple 
@@ -237,7 +237,7 @@ private:
     /**
     * RCLCPP Logger
     */
-    rclcpp::Logger logger = rclcpp::get_logger("franka_bimanual_hardware_interface");
+    rclcpp::Logger logger = rclcpp::get_logger("franka_mm_hardware_interface");
 
     /**
     * Vector used to handle N connection objects with N franka arms
@@ -256,4 +256,4 @@ private:
     bool limit_override = false;
 };
 
-#endif  // FRANKA_BIMANUAL_HW_INTERFACE_HPP
+#endif  // FRANKA_MM_HW_INTERFACE_HPP

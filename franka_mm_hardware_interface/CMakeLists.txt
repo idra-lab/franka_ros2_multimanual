@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(franka_bimanual_hardware_interface)
+project(franka_mm_hardware_interface)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,7 +22,7 @@ include_directories(
 # Used files to build the library
 add_library(
   ${PROJECT_NAME} SHARED
-  src/franka_bimanual_hardware_interface.cpp
+  src/franka_mm_hardware_interface.cpp
   src/franka_wrapper.cpp
   src/lambda_control.cpp
   src/mode_switch_plan.cpp
@@ -48,7 +48,7 @@ target_include_directories(
 )
 
 # Export the plugin if needed (for hardware interface)
-pluginlib_export_plugin_description_file(hardware_interface franka_bimanual_hardware_interface.xml)
+pluginlib_export_plugin_description_file(hardware_interface franka_mm_hardware_interface.xml)
 
 # Install headers
 install(

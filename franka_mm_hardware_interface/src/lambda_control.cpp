@@ -1,5 +1,5 @@
-#include "franka_bimanual_hardware_interface/lambda_control.hpp"
-#include "franka_bimanual_hardware_interface/franka_wrapper.hpp"
+#include "franka_mm_hardware_interface/lambda_control.hpp"
+#include "franka_mm_hardware_interface/franka_wrapper.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 

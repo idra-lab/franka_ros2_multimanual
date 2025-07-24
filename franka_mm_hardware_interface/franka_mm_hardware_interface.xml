@@ -1,0 +1,9 @@
+<library path="franka_mm_hardware_interface">
+  <class name="franka_mm_hardware_interface/FrankaMultimanualHardwareInterface"
+         type="HardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+    Multimanual Franka robot hardware interface.
+    </description>
+  </class>
+</library>
