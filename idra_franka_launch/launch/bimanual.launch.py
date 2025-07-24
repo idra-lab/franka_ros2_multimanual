@@ -242,17 +242,24 @@ def generate_launch_description():
         output='screen'
     )
 
+    load_pose_broadcaster = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['pose_reader', '--controller-manager', '/controller_manager'],
+        output='screen'
+    )
+
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_velocity_left', '--controller-manager', '/controller_manager'],
+        arguments=['cartesian_velocity_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['joint_velocity_right', '--controller-manager', '/controller_manager'],
+        arguments=['cartesian_velocity_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -368,7 +375,7 @@ def generate_launch_description():
         TimerAction(
             period=2.0,
             actions=[
-                load_joint_state_broadcaster
+                load_joint_state_broadcaster, load_pose_broadcaster
             ]
         ),
 

@@ -1,0 +1,7 @@
+<library path="franka_mm_control">
+  <class name="franka_mm_control/PoseReader"
+         type="PoseReader"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>Publishes column-major transformation matrices of Franka robots</description>
+  </class>
+</library>
