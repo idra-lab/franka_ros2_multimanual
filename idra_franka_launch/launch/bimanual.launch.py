@@ -143,10 +143,12 @@ def robot_description_dependent_nodes_spawner(
             package='controller_manager',
             executable='ros2_control_node',
             parameters=[
-                franka_controllers_str
+                franka_controllers_str,
+                {'load_gripper': load_gripper_str}
             ],
             remappings=[
-                ('~/robot_description', '/robot_description')
+                ('~/robot_description', '/robot_description'),
+                ('joint_states', '/joint_states')
             ],
             output='screen',
             condition=UnlessCondition(use_gazebo),
@@ -335,7 +337,7 @@ def generate_launch_description():
             name='joint_state_publisher',
             parameters=[{
                 'source_list': joint_state_publisher_sources,
-                'rate': 50.0,
+                'rate': 1000.0,
                 'use_robot_description': False,
             }],
             output='screen',
