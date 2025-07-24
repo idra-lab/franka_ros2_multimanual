@@ -111,12 +111,12 @@ std::function<void()> LambdaControl::startCartesianPositionControl(FrankaRobotWr
 
                 robot.copy_state_to_ifs(state);
 
-                if (robot.first_cartesian_position_update) {
+                if (robot.first_cartesian_pose_update) {
                     // std::lock_guard<std::mutex> lock(*write_mutex);
                     RCLCPP_INFO(robot.get_logger(), "First cartesian position initialized in arm %s", robot.name.c_str());
                     std::copy(robot.if_states.x.begin(), robot.if_states.x.end(), robot.exported_cmds.x.begin());
                     std::copy(robot.if_states.x.begin(), robot.if_states.x.end(), robot.if_cmds.x.begin());
-                    robot.first_cartesian_position_update = false;
+                    robot.first_cartesian_pose_update = false;
                 }
 
                 if (robot.first_elbow_update) {
