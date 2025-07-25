@@ -121,12 +121,6 @@ def robot_description_dependent_nodes_spawner(
             f'{p}<link name="{i}_base"/>\n{p}<joint name="{i}_fr3_{i}_base_joint" type="fixed">\n{p}{p}<origin rpy="0 0 0" xyz="0 0 0"/>\n{p}{p}<parent link="{i}_base"/>\n{p}{p}<child link="{i}_fr3_link0"/>\n{p}</joint>',
             1
         )
-    
-    robot_description = re.sub(
-        f'{p}<gazebo>\n{p}{p}<plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">\n{p}{p}{p}<parameters>[\w\/]+\/franka_gazebo_controllers\.yaml</parameters>\n{p}{p}</plugin>\n{p}</gazebo>',
-        '',
-        robot_description
-    )
 
     # print(robot_description)
 
