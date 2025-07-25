@@ -37,6 +37,21 @@ install(
   RUNTIME DESTINATION bin
 )
 
+install(
+  PROGRAMS
+    scripts/position_test.py
+    scripts/velocity_test.py
+    scripts/effort_test.py
+    scripts/cart_pos_test.py
+    scripts/cart_vel_test.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # Install headers
 install(
   DIRECTORY include/

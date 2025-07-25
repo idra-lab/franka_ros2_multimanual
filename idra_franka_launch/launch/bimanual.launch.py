@@ -90,7 +90,7 @@ def robot_description_dependent_nodes_spawner(
     )
 
     franka_controllers = PathJoinSubstitution(
-        [FindPackageShare('idra_franka_launch'), 'config', 'basic_controllers.yaml']
+        [FindPackageShare('franka_mm_control'), 'config', 'basic_controllers.yaml']
     )
     franka_controllers_str =  franka_controllers.perform(context)
 
@@ -252,14 +252,14 @@ def generate_launch_description():
     controller_left = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['cartesian_velocity_left', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_left', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
     controller_right = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['cartesian_velocity_right', '--controller-manager', '/controller_manager'],
+        arguments=['joint_velocity_right', '--controller-manager', '/controller_manager'],
         output='screen'
     )
 
@@ -334,7 +334,7 @@ def generate_launch_description():
 
         robot_description_dependent_nodes_spawner_opaque_function,
         
-        # WARN: Gripper works but itroduces delays in controls
+        # WARN: Gripper works but introduces delays in controls
         # robot_gripper_left,
         # robot_gripper_right,
 
