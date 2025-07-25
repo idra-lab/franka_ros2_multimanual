@@ -31,8 +31,11 @@ class SmoothCartesianPosePublisher(Node):
         self.amplitude = 0.003  # [m]
         self.frequency = 1 / 100  # Hz
 
-        self.start_time = None
-        self.timer = self.create_timer(0.05, self.timer_callback)
+        self.timer_period = 0.05  # seconds
+        self.timer_count = 0
+        self.motion_active = False
+
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
     def pose_callback(self, msg):
         if len(msg.data) % 16 != 0:
@@ -44,16 +47,16 @@ class SmoothCartesianPosePublisher(Node):
 
         if self.initial_pose is None:
             self.initial_pose = np.copy(self.current_pose_data)
-            self.start_time = self.get_clock().now()
+            self.motion_active = True
             self.get_logger().info(f"Initial pose recorded: {self.initial_pose}")
 
     def timer_callback(self):
-        if self.current_pose_data is None or self.initial_pose is None:
+        if self.current_pose_data is None or self.initial_pose is None or not self.motion_active:
             self.get_logger().warn("Waiting for valid initial pose...")
             return
 
-        now = self.get_clock().now()
-        elapsed_time = (now - self.start_time).nanoseconds / 1e9
+        elapsed_time = self.timer_count * self.timer_period
+        self.timer_count += 1
 
         dx = self.amplitude * math.sin(2 * math.pi * self.frequency * elapsed_time)
 

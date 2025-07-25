@@ -20,27 +20,28 @@ class EffortPublisher(Node):
             '/joint_effort_right/commands',
             10
         )
-        timer_period = 0.01  # seconds
-        self.start_time = self.get_clock().now()
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+        self.timer_count = 0
+        self.timer_period = 0.01  # seconds
 
         self.amplitude = 1.5
-        self.frequency = 2
+        self.frequency = 1
+
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
     def timer_callback(self):
-        now = self.get_clock().now()
-        elapsed_time = (now - self.start_time).nanoseconds / 1e9  # seconds
+        elapsed_time = self.timer_count * self.timer_period
+        self.timer_count += 1
 
         if elapsed_time >= 10:
-            self.get_logger().info('Stopping timer after 5 seconds.')
+            self.get_logger().info('Stopping timer after 10 seconds.')
             self.timer.cancel()
 
             msg = Float64MultiArray()
-            msg.data = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            msg.data = [0.0] * 7
             self.publisher_left.publish(msg)
             self.publisher_right.publish(msg)
             self.get_logger().info(f'Sent: "{msg.data}"')
-
             return
 
         effort = self.amplitude * math.sin(2 * math.pi * self.frequency * elapsed_time)
