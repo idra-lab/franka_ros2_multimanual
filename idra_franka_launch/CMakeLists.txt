@@ -9,7 +9,8 @@ find_package(ament_cmake REQUIRED)
 
 install(
   PROGRAMS
-    scripts/gripper_test.py
+    scripts/gripper_grasp_test.py
+    scripts/gripper_homing_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
