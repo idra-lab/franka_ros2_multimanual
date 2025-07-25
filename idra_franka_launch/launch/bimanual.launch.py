@@ -322,8 +322,8 @@ def generate_launch_description():
         robot_description_dependent_nodes_spawner_opaque_function,
         
         # WARN: Gripper works but introduces delays in controls
-        # robot_gripper_left,
-        # robot_gripper_right,
+        robot_gripper_left,
+        robot_gripper_right,
 
         Node(
             package='joint_state_publisher',
