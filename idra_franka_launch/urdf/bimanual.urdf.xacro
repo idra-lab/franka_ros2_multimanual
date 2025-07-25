@@ -132,8 +132,10 @@
                       with_sc="$(arg with_sc)"
                       ros2_control="$(arg ros2_control)"
                       robot_ip="$(arg franka1_ip)"
+
                       arm_prefix="franka1_"
-                      connected_to="franka1_base"
+                      parent=""
+                      connected_to=""
                       
                       no_prefix="false"
                       use_fake_hardware="$(arg use_fake_hardware)"
@@ -147,10 +149,9 @@
   <!-- Dimensions taken from technical drawing of Franka plate and custom designed plate, do not touch -->
   <joint name="plate_to_franka1" type="fixed">
     <parent link="robot1_plate"/>
-    <child link="franka1_base"/>
+    <child link="franka1_fr3_link0"/>
     <origin xyz="0.145 0.107 0.018" rpy="0 0 ${-pi/2}"/>
   </joint>
-
 
   <!--  _____                _         ____   -->
   <!-- |  ___| __ __ _ _ __ | | ____ _|___ \  -->
@@ -169,8 +170,10 @@
                       with_sc="$(arg with_sc)"
                       ros2_control="$(arg ros2_control)"
                       robot_ip="$(arg franka2_ip)"
+                      
                       arm_prefix="franka2_"
-                      connected_to="franka2_base"
+                      parent=""
+                      connected_to=""
                      
                       no_prefix="false"
                       use_fake_hardware="$(arg use_fake_hardware)"
@@ -184,7 +187,7 @@
   <!-- Dimensions taken from technical drawing of Franka plate and custom designed plate, do not touch -->
   <joint name="plate_to_franka2" type="fixed">
     <parent link="robot2_plate"/>
-    <child link="franka2_base"/>
+    <child link="franka2_fr3_link0"/>
     <origin xyz="0.145 0.107 0.018" rpy="0 0 ${-pi/2}"/>
   </joint>
 

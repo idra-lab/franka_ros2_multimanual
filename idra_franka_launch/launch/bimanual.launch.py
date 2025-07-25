@@ -115,13 +115,6 @@ def robot_description_dependent_nodes_spawner(
         }
     ).toprettyxml(p)
 
-    for i in ['franka1', 'franka2']:
-        robot_description = robot_description.replace(
-            f'{p}<link name="world"/>\n{p}<joint name="world_joint" type="fixed">\n{p}{p}<origin rpy="0 0 0" xyz="0 0 0"/>\n{p}{p}<parent link="world"/>\n{p}{p}<child link="fr3_link0"/>\n{p}</joint>',
-            f'{p}<link name="{i}_base"/>\n{p}<joint name="{i}_fr3_{i}_base_joint" type="fixed">\n{p}{p}<origin rpy="0 0 0" xyz="0 0 0"/>\n{p}{p}<parent link="{i}_base"/>\n{p}{p}<child link="{i}_fr3_link0"/>\n{p}</joint>',
-            1
-        )
-
     # print(robot_description)
 
     return [
