@@ -94,7 +94,10 @@ void ModeSwitchPlan::who_and_what_switched(
             what = ControlMode::VELOCITY;
         } else if (iface.find("/effort") != std::string::npos) {
             what = ControlMode::EFFORT;
-        } else if (iface.find("/cartesian_pose_command") != std::string::npos) {
+        } else if (
+            iface.find("/cartesian_pose") != std::string::npos ||
+            iface.find("/cartesian_pose_command") != std::string::npos
+        ) {
             what = ControlMode::CARTESIAN_POSITION;
         } else if (iface.find("/cartesian_velocity") != std::string::npos) {
             what = ControlMode::CARTESIAN_VELOCITY;

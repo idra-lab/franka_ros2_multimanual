@@ -233,9 +233,18 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
                 std::lock_guard<std::mutex> lock(*robot.write_mutex);
 
                 // equilibrium point is the setted state
-                Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(robot.if_cmds.x.data()));
-                Eigen::Vector3d position_d(initial_transform.translation());
-                Eigen::Quaterniond orientation_d(initial_transform.rotation());
+                //Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(robot.if_cmds.x.data()));
+                //Eigen::Vector3d position_d(initial_transform.translation());
+                //Eigen::Quaterniond orientation_d(initial_transform.rotation());
+
+                // equilibrium point is the setted state
+                Eigen::Affine3d transform_d(Eigen::Matrix4d::Map(state.O_T_EE.data()));
+                Eigen::Vector3d position_d(robot.if_cmds.qx[0], robot.if_cmds.qx[1], robot.if_cmds.qx[2]);
+                Eigen::Quaterniond orientation_d(robot.if_cmds.qx[3], robot.if_cmds.qx[4], robot.if_cmds.qx[5], robot.if_cmds.qx[6]); // w, x, y, z
+
+                RCLCPP_INFO(robot.get_logger(), "%f %f %f %f %f %f %f ", 
+                        robot.if_cmds.qx[0], robot.if_cmds.qx[1], robot.if_cmds.qx[2], robot.if_cmds.qx[3],
+                        robot.if_cmds.qx[4], robot.if_cmds.qx[5], robot.if_cmds.qx[6]);
 
                 // get state variables
                 std::array<double, 7> coriolis_array  = robot.model->coriolis(state);
@@ -275,7 +284,15 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
             
                 std::array<double, 7> tau_d_array{};
                 Eigen::VectorXd::Map(&tau_d_array[0], 7) = tau_d;
-                return tau_d_array;
+
+                franka::Torques out = franka::Torques(tau_d_array);
+                if (!limit_override) {
+                    out.tau_J = franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
+                }
+                
+                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+
+                return out;
             }
         });
     };

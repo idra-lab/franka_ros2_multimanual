@@ -263,7 +263,7 @@ HardwareInterface::export_state_interfaces() {
         for (long i = 0; i < 7; ++i) {
             jnt_name = arms[p].name + "_" + cartesian_pose_q_interface_names[i];
 
-            state_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].if_states.qx[i]);
+            state_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION_Q, &arms[p].if_states.qx[i]);
         }
 
         for (long i = 0; i < 2; ++i) {

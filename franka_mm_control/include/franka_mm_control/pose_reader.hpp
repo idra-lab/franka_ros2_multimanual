@@ -26,13 +26,17 @@
 /**
  * This controller reads the values inside Franka Robots pose interfaces, 
  * concatenates as double array and publishes them inside 
- * the /current_pose topic.
+ * the /current_pose and /current_q_pose topic.
+ * 
+ * This two topics describe end-effector position and rotation in the
+ * following formats:
+ *  - /current_pose expresses the value as an homogeneous transformations matrices in 
+ *    column-major format. The vector as length equal to 16 * robot_number.
+ *  - /current_q_pose expresses the value as concatenation of position vector and
+ *    quaternion. The vector as length equal to 7 * robot_number.
  * 
  * This controller has an input, robot_names, that is a list of 
  * robot names that needs to be searched.
- * 
- * The output is expresesd as homogeneous transfomrations matrices in 
- * column-major format. The vector as length equal to 16 * robot_number
  * 
  * @author Alessandro Moscatelli
  */
@@ -57,7 +61,7 @@ public:
     /**
      * Loads the state interface configuration. 
      * State interfaces must are in the format <robot_name>_i/cartesian_pose_command, 
-     * where i is [0, 15] rapresenting the indexes of the transformation matrix.
+     * where i is [0, 15] representing the indexes of the transformation matrix.
      * 
      * @returns Object containing the requested interfaces
      */
@@ -102,9 +106,14 @@ private:
     std::vector<std::string> robot_names;
 
     /**
-     * Publisher object where poses will be outputted
+     * Publisher object where poses will be outputed in matrix format
      */
     rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr publisher;
+
+    /**
+     * Publisher object where poses will be outputed position + quaternion
+     */
+    rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr q_publisher;
 };
 
 #endif  // POSE_READER_HPP

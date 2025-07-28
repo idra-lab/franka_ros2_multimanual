@@ -39,6 +39,12 @@ controller_manager:
     cartesian_pose_right:
       type: forward_command_controller/ForwardCommandController
 
+    cartesian_impedance_left:
+      type: forward_command_controller/ForwardCommandController
+
+    cartesian_impedance_right:
+      type: forward_command_controller/ForwardCommandController
+
     cartesian_velocity_left:
       type: forward_command_controller/ForwardCommandController
 
@@ -146,6 +152,30 @@ joint_effort_right:
       - franka1_fr3_joint5
       - franka1_fr3_joint6
       - franka1_fr3_joint7
+
+cartesian_impedance_left:
+  ros__parameters:
+    joints:
+      - franka2_x
+      - franka2_y
+      - franka2_z
+      - franka2_qw
+      - franka2_qx
+      - franka2_qy
+      - franka2_qz
+    interface_name: cartesian_pose
+
+cartesian_impedance_right:
+  ros__parameters:
+    joints:
+      - franka1_x
+      - franka1_y
+      - franka1_z
+      - franka1_qw
+      - franka1_qx
+      - franka1_qy
+      - franka1_qz
+    interface_name: cartesian_pose
 
 cartesian_pose_left:
   ros__parameters:

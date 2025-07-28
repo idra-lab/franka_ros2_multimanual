@@ -21,10 +21,10 @@ void FrankaRobotWrapper::copy_state_to_ifs(const franka::RobotState& state) {
     if_states.qx[0] = position.x();
     if_states.qx[1] = position.y();
     if_states.qx[2] = position.z();
-    if_states.qx[3] = orientation.x();
-    if_states.qx[4] = orientation.y();
-    if_states.qx[5] = orientation.z();
-    if_states.qx[6] = orientation.w();
+    if_states.qx[3] = orientation.w();
+    if_states.qx[4] = orientation.x();
+    if_states.qx[5] = orientation.y();
+    if_states.qx[6] = orientation.z();
 
     if (first_joint_position_update) {
         RCLCPP_INFO(get_logger(), "First joint position initialized in arm %s", name.c_str());

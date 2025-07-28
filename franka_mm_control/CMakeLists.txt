@@ -45,6 +45,7 @@ install(
     scripts/effort_test.py
     scripts/cart_pos_test.py
     scripts/cart_vel_test.py
+    scripts/cart_impedance_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
