@@ -480,7 +480,7 @@ HardwareInterface::perform_command_mode_switch(
 
         //TODO: CHECK, this reset_controller could be removed
         arm.reset_controller();
-        arm.setup_controller(change.second);
+        arm.setup_controller(change.second, limit_override);
 
         arm.control_mode = change.second;
 

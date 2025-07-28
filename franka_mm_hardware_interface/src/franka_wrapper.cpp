@@ -14,9 +14,7 @@ void FrankaRobotWrapper::copy_state_to_ifs(const franka::RobotState& state) {
     if_states.elbow = state.elbow;
 }
 
-void FrankaRobotWrapper::setup_controller(ControlMode mode) {
-
-    bool limit_override = false;
+void FrankaRobotWrapper::setup_controller(ControlMode mode, bool limit_override) {
     std::function<void()> startController;
 
     if(mode == ControlMode::POSITION) {

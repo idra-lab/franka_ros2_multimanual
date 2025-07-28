@@ -272,9 +272,10 @@ class FrankaRobotWrapper {
     /**
      * This function is used to activate a controller thread in a RobotUnit object.
      *
-     * @param mode  Operational mode of the controller
+     * @param mode           Operational mode of the controller
+     * @param limit_override If True, skips fraka::limitRate before sending a command.
      */
-    void setup_controller(ControlMode mode);
+    void setup_controller(ControlMode mode, bool limit_override);
 
     /**
      * Stops the controller of a robot.
