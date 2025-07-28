@@ -135,9 +135,6 @@ joint_effort_left:
       - franka2_fr3_joint5
       - franka2_fr3_joint6
       - franka2_fr3_joint7
-    joint_limits:
-      has_velocity_limits: true
-      max_velocity: 2.175
 
 joint_effort_right:
   ros__parameters:
@@ -149,9 +146,6 @@ joint_effort_right:
       - franka1_fr3_joint5
       - franka1_fr3_joint6
       - franka1_fr3_joint7
-    joint_limits:
-      has_velocity_limits: true
-      max_velocity: 2.175
 
 cartesian_pose_left:
   ros__parameters:
