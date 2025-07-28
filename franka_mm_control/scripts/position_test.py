@@ -2,10 +2,10 @@
 
 import rclpy
 import math
+import numpy as np
 from rclpy.node import Node
 
 from std_msgs.msg import Float64MultiArray
-from sensor_msgs.msg import JointState
 
 class PositionPublisher(Node):
 
@@ -15,46 +15,41 @@ class PositionPublisher(Node):
         self.publisher_left = self.create_publisher(Float64MultiArray, '/joint_position_left/commands', 10)
         self.publisher_right = self.create_publisher(Float64MultiArray, '/joint_position_right/commands', 10)
 
-        self.timer_period = 0.01  # seconds
+        self.timer_period = 0.001  # seconds
         self.timer_count = 0
 
         self.amplitude = 0.5
-        self.frequency = 1 / 10
+        self.frequency = 0.001
 
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
         self.base_position = []
         self.received_joint_state = False
 
-        self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 10)
+        self.create_subscription(Float64MultiArray, '/current_position', self.joint_state_callback, 10)
 
     def joint_state_callback(self, msg):
         if self.received_joint_state:
             return
 
-        r_names = ["franka1", "franka2"]
-        self.received_joint_state = True
-        for i_name in range(len(r_names)):
-            expected_joint_names = [f"{r_names[i_name]}_fr3_joint{i}" for i in range(1, 8)]
+        temp = list(msg.data)
 
-            name_to_index = {name: idx for idx, name in enumerate(msg.name)}
+        if len(temp) % 7 == 0:
+            self.received_joint_state = True
+            self.base_position = np.array(temp).reshape(-1, 7)
+            self.get_logger().info(f"Base positions: {self.base_position}")
+        else:
+            self.get_logger().warn('Unexpected size of the array')
 
-            # Check if all expected joints are present
-            if all(joint in name_to_index for joint in expected_joint_names):
-                # Extract joint positions in the correct order
-                self.base_position.append([
-                    msg.position[name_to_index[joint]] for joint in expected_joint_names
-                ])
-                self.get_logger().info(f"Base position for {r_names[i_name]} received: {self.base_position[i_name]}")
-            else:
-                missing = [j for j in expected_joint_names if j not in name_to_index]
-                self.get_logger().warn(f"Waiting for joints: {missing}")
 
     def timer_callback(self):
+        if not self.received_joint_state or len(self.base_position) < 2:
+            return  # Still waiting for valid joint states
+
         elapsed_time = self.timer_count * self.timer_period
         self.timer_count += 1
 
-        if elapsed_time >= 10:
+        if elapsed_time >= 100:
             self.get_logger().info('Stopping timer after 5 seconds.')
             self.timer.cancel()
 
@@ -67,18 +62,20 @@ class PositionPublisher(Node):
 
         position_offset = self.amplitude * math.sin(2 * math.pi * self.frequency * elapsed_time)
 
-        msg = Float64MultiArray()
-        modulated_position = self.base_position[0].copy()
-        modulated_position[3] += position_offset  # Apply sinusoid to joint index 3
-        msg.data = modulated_position
-        self.publisher_left.publish(msg)
+        modulated_position_left = self.base_position[1].copy().tolist()
+        modulated_position_left[3] += position_offset
+        msg_left = Float64MultiArray()
+        msg_left.data = modulated_position_left
+        self.publisher_left.publish(msg_left)
+        self.get_logger().info(f'Left: {msg_left.data}')
 
-        msg = Float64MultiArray()
-        modulated_position = self.base_position[1].copy()
-        modulated_position[3] += position_offset  # Apply sinusoid to joint index 3
-        msg.data = modulated_position
-        self.publisher_right.publish(msg)
-        self.get_logger().info(f'Sent: {msg.data}')
+        modulated_position_right = self.base_position[0].copy().tolist()
+        modulated_position_right[3] += position_offset
+        msg_right = Float64MultiArray()
+        msg_right.data = modulated_position_right
+        # self.publisher_right.publish(msg_right)
+
+
 
 
 def main(args=None):

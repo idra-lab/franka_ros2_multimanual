@@ -1,4 +1,9 @@
 <library path="franka_mm_control">
+  <class name="franka_mm_control/PositionReader"
+         type="PositionReader"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>Publishes joint position angles</description>
+  </class>
   <class name="franka_mm_control/PoseReader"
          type="PoseReader"
          base_class_type="controller_interface::ControllerInterface">

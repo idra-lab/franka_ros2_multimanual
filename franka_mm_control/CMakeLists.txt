@@ -16,6 +16,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} SHARED 
+  src/position_reader.cpp
   src/pose_reader.cpp
 )
 

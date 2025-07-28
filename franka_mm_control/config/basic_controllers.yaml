@@ -3,6 +3,9 @@ controller_manager:
     thread_priority: 98
     update_rate: 1000  # Hz
 
+    position_reader:
+      type: franka_mm_control/PositionReader
+
     pose_reader:
       type: franka_mm_control/PoseReader 
   
@@ -47,6 +50,12 @@ controller_manager:
 
     elbow_right:
       type: forward_command_controller/ForwardCommandController
+
+position_reader:
+  ros__parameters:
+    robot_names:
+      - franka1
+      - franka2
 
 pose_reader:
   ros__parameters:
