@@ -247,6 +247,15 @@
       </xacro:unless>
     </xacro:macro>
     <xacro:loop i="0"/>
+    
+    <!-- Cartesian pose (position + quaternion) interface -->
+    <xacro:general_purpose_io prefix="${robot_name}_x"  command_interface="cartesian_pose" index="0"/>
+    <xacro:general_purpose_io prefix="${robot_name}_y"  command_interface="cartesian_pose" index="0"/>
+    <xacro:general_purpose_io prefix="${robot_name}_z"  command_interface="cartesian_pose" index="1"/>
+    <xacro:general_purpose_io prefix="${robot_name}_qw" command_interface="cartesian_pose" index="2"/>
+    <xacro:general_purpose_io prefix="${robot_name}_qx" command_interface="cartesian_pose" index="3"/>
+    <xacro:general_purpose_io prefix="${robot_name}_qy" command_interface="cartesian_pose" index="4"/>
+    <xacro:general_purpose_io prefix="${robot_name}_qz" command_interface="cartesian_pose" index="5"/>   
 
     <!-- Cartesian velocity interfaces -->
     <xacro:general_purpose_io prefix="${robot_name}_vx" command_interface="cartesian_velocity" index="0"/>

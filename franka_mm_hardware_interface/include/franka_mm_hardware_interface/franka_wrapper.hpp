@@ -29,6 +29,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "franka/robot.h"
+#include "franka/model.h"
 
 #include <franka_msgs/srv/set_cartesian_stiffness.hpp>
 #include <franka_msgs/srv/set_force_torque_collision_behavior.hpp>
@@ -95,6 +96,11 @@ class FrankaRobotWrapper {
     using ControlPtr = std::unique_ptr<std::thread>;
 
     /**
+     * Unique pointer to the robot model
+     */
+    using ModelPtr   = std::unique_ptr<franka::Model>;
+
+    /**
      * Unique pointer to a mutex
      */
     using MutexPtr   = std::unique_ptr<std::mutex>;
@@ -135,6 +141,8 @@ class FrankaRobotWrapper {
          */
         Arr16 x;
 
+        Arr7 qx;
+
         /**
          * State of the elbow configuration
          */
@@ -164,6 +172,8 @@ class FrankaRobotWrapper {
          * Cartesian position values, expressed in column-major format.
          */
         Arr16 x;
+        
+        Arr7 qx;
 
         /**
          * Cartesian velocity values
@@ -198,6 +208,11 @@ class FrankaRobotWrapper {
      * Current state of the robot
      */
     franka::RobotState current_state;
+
+    /**
+     * Model of the robot.
+     */
+    ModelPtr model;
 
     /**
      * Boolean value that signals if the robot has to update his joint position (q) values.

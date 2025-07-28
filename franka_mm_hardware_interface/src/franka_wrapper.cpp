@@ -6,12 +6,50 @@
 #include "franka/control_tools.h"
 #include "franka/rate_limiting.h"
 
+#include <Eigen/Dense>
+
 void FrankaRobotWrapper::copy_state_to_ifs(const franka::RobotState& state) {
     if_states.q     = state.q;
     if_states.qd    = state.dq;
     if_states.tau   = state.tau_J;
     if_states.x     = state.O_T_EE;
     if_states.elbow = state.elbow;
+
+    Eigen::Affine3d transform(Eigen::Matrix4d::Map(state.O_T_EE.data()));
+    Eigen::Vector3d position(transform.translation());
+    Eigen::Quaterniond orientation(transform.rotation());
+    if_states.qx[0] = position.x();
+    if_states.qx[1] = position.y();
+    if_states.qx[2] = position.z();
+    if_states.qx[3] = orientation.x();
+    if_states.qx[4] = orientation.y();
+    if_states.qx[5] = orientation.z();
+    if_states.qx[6] = orientation.w();
+
+    if (first_joint_position_update) {
+        RCLCPP_INFO(get_logger(), "First joint position initialized in arm %s", name.c_str());
+        std::copy(if_states.q.begin(), if_states.q.end(), exported_cmds.q.begin());
+        std::copy(if_states.q.begin(), if_states.q.end(), if_cmds.q.begin());
+        first_joint_position_update = false;
+    }
+
+    if (first_cartesian_pose_update) {
+        RCLCPP_INFO(get_logger(), "First cartesian position initialized in arm %s", name.c_str());
+        std::copy(if_states.x.begin(), if_states.x.end(), exported_cmds.x.begin());
+        std::copy(if_states.x.begin(), if_states.x.end(), if_cmds.x.begin());
+
+        std::copy(if_states.qx.begin(), if_states.qx.end(), exported_cmds.qx.begin());
+        std::copy(if_states.qx.begin(), if_states.qx.end(), if_cmds.qx.begin());
+
+        first_cartesian_pose_update = false;
+    }
+
+    if (first_elbow_update) {
+        RCLCPP_INFO(get_logger(), "First elbow initialized in arm %s", name.c_str());
+        std::copy(if_states.elbow.begin(), if_states.elbow.end(), exported_cmds.elbow.begin());
+        std::copy(if_states.elbow.begin(), if_states.elbow.end(), if_cmds.elbow.begin());
+        first_elbow_update = false;
+    }
 }
 
 void FrankaRobotWrapper::setup_controller(ControlMode mode, bool limit_override) {
@@ -24,7 +62,7 @@ void FrankaRobotWrapper::setup_controller(ControlMode mode, bool limit_override)
     } else if (mode == ControlMode::EFFORT) {
         startController = LambdaControl::startJointEffortControl(*this, limit_override);
     } else if (mode == ControlMode::CARTESIAN_POSITION) {
-        startController = LambdaControl::startCartesianPositionControl(*this, limit_override);
+        startController = LambdaControl::startCartesianImpedanceControl(*this, limit_override);
     } else if (mode == ControlMode::CARTESIAN_VELOCITY) {
         startController = LambdaControl::startCartesianVelocityControl(*this, limit_override);
     } else {

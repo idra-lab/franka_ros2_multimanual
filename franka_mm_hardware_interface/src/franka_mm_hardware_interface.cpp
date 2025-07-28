@@ -103,6 +103,8 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         // Controller state
         arms[i].control_mode = FrankaRobotWrapper::ControlMode::INACTIVE;
 
+        arms[i].model = std::make_unique<franka::Model>(arms[i].arm->loadModel());
+
         // arms[i].param_server = std::make_shared(rclcpp::NodeOptions(), arms[i]);
 
         RCLCPP_INFO(get_logger(), "Done!");
@@ -232,11 +234,13 @@ HardwareInterface::export_state_interfaces() {
     * NOLINT: 
     * 7 joints * 3 cmd interfaces * n robots + 
     * 16 cartesian positions * n robots +
+    * 7 quaternion pose * n robots +
     * 2 elbow * n robots
     */
     state_interfaces.reserve(
         7 * 3 * arms.size() +
         16 * arms.size() +
+        7 * arms.size() + 
         2 * arms.size()
     );  
 
@@ -254,6 +258,12 @@ HardwareInterface::export_state_interfaces() {
             jnt_name = arms[p].name + "_" + std::to_string(i);
 
             state_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].if_states.x[i]);
+        }
+
+        for (long i = 0; i < 7; ++i) {
+            jnt_name = arms[p].name + "_" + cartesian_pose_q_interface_names[i];
+
+            state_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].if_states.qx[i]);
         }
 
         for (long i = 0; i < 2; ++i) {
@@ -278,14 +288,14 @@ HardwareInterface::export_command_interfaces() {
     /*
     * NOLINT: 
     * 7 joints * 3 cmd interfaces * n robots + 
-    * 6 cartesian velocites * n robots + 
     * 16 cartesian positions * n robots +
+    * 7 quaternion pose * n robots +
     * 2 elbow * n robots
     */
     cmd_interfaces.reserve(
-        7 * 3 * arms.size() + 
-        6 * arms.size() +
+        7 * 3 * arms.size() +
         16 * arms.size() +
+        7 * arms.size() + 
         2 * arms.size()
     );  
 
@@ -308,6 +318,12 @@ HardwareInterface::export_command_interfaces() {
             jnt_name = arms[p].name + "_" + std::to_string(i);
 
             cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].exported_cmds.x[i]);
+        }
+
+        for (long i = 0; i < 7; ++i) {
+            jnt_name = arms[p].name + "_" + cartesian_pose_q_interface_names[i];
+
+            cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION_Q, &arms[p].exported_cmds.qx[i]);
         }
 
         for (long i = 0; i < 2; ++i) {

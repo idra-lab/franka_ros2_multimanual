@@ -91,6 +91,15 @@ namespace LambdaControl {
      */
     std::function<void()> startCartesianVelocityControl(FrankaRobotWrapper& robot, bool limit_override);
     
+    /**
+     * Return a function that, if called, starts a cartesian impedance control on the robot.
+     * 
+     * @param robot Robot where the controller will be activated
+     * @param limit_override If set to False, the controller will use franka::limitRate.
+     * 
+     * @return Lambda function used to by the control thread.
+     */
+    std::function<void()> startCartesianImpedanceControl(FrankaRobotWrapper& robot, bool limit_override);
 }
 
 #endif  // LAMBDA_CONTROL_HPP

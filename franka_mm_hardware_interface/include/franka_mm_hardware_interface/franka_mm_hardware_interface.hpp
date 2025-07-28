@@ -44,6 +44,11 @@
 */
 class HardwareInterface : public hardware_interface::SystemInterface {
 public:
+
+    const std::string HW_IF_CART_POSITION_Q = "cartesian_pose";
+
+    const std::vector<std::string> cartesian_pose_q_interface_names = {"x", "y", "z", "qw", "qx", "qy", "qz"};
+
     /**
     * Identification name of the cartesian velocity interface
     */
