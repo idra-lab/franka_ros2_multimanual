@@ -1,4 +1,5 @@
 #include "franka_mm_hardware_interface/franka_mm_hardware_interface.hpp"
+#include "franka_mm_hardware_interface/franka_param_service_server.hpp"
 
 #include <array>
 #include <exception>
@@ -15,6 +16,7 @@
 #include "franka/control_tools.h"
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
+
 
 //  ____   ____ _     ____ ____  ____    _     _  __       ____           _
 // |  _ \ / ___| |   / ___|  _ \|  _ \  | |   (_)/ _| ___ / ___|   _  ___| | ___
@@ -100,6 +102,8 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         
         // Controller state
         arms[i].control_mode = FrankaRobotWrapper::ControlMode::INACTIVE;
+
+        // arms[i].param_server = std::make_shared(rclcpp::NodeOptions(), arms[i]);
 
         RCLCPP_INFO(get_logger(), "Done!");
     }

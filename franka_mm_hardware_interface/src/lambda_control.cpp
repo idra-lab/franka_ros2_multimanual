@@ -30,6 +30,12 @@ std::function<void()> LambdaControl::startJointPositionControl(FrankaRobotWrappe
                 std::lock_guard<std::mutex> lock(*robot.write_mutex);
                 franka::JointPositions out = franka::JointPositions(robot.if_cmds.q);
                 
+                /*
+                RCLCPP_INFO(robot.get_logger(), "%f %f %f %f %f %f %f ", 
+                                        robot.if_cmds.q[0], robot.if_cmds.q[1], robot.if_cmds.q[2], robot.if_cmds.q[3],
+                                        robot.if_cmds.q[4], robot.if_cmds.q[5], robot.if_cmds.q[6]);
+                */
+
                 if (!limit_override) {
                     out.q = franka::limitRate(
                         franka::computeUpperLimitsJointVelocity(robot.current_state.q_d),

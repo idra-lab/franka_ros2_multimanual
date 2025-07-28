@@ -30,6 +30,16 @@
 
 #include "franka/robot.h"
 
+#include <franka_msgs/srv/set_cartesian_stiffness.hpp>
+#include <franka_msgs/srv/set_force_torque_collision_behavior.hpp>
+#include <franka_msgs/srv/set_full_collision_behavior.hpp>
+#include <franka_msgs/srv/set_joint_stiffness.hpp>
+#include <franka_msgs/srv/set_load.hpp>
+#include <franka_msgs/srv/set_stiffness_frame.hpp>
+#include <franka_msgs/srv/set_tcp_frame.hpp>
+
+#include "franka_mm_hardware_interface/franka_param_service_server.hpp"
+
 /**
  * Class used to handle the connection and the control managment of a franka::Robot object.
  * 
@@ -248,11 +258,14 @@ class FrankaRobotWrapper {
      * Unique pointer to the thread used to handle the robot controller.
      */
     ControlPtr control = nullptr;
+    
+    std::unique_ptr<FrankaParamServiceServer> param_server;
 
     /**
      * Current operational mode of the robot
      */
     ControlMode control_mode = ControlMode::INACTIVE;
+
 
     /**
      * Flag that signals if the robot is also being controlled with elbow inferfaces.
@@ -294,7 +307,117 @@ class FrankaRobotWrapper {
      * @returns True if the controller is commandend in cartesian mode, False otherwise. 
      */
     bool is_cartesian() const;
+
+    /* --- COPIED FROM FRANKA --- */
+
+    /**
+     * Sets the impedance for each joint in the internal controller.
+     *
+     * User-provided torques are not affected by this setting.
+     *
+     * @param[in] franka_msgs::srv::SetJointStiffness::Request::SharedPtr requests with JointStiffness
+     * values
+     *
+     * @throw CommandException if the Control reports an error.
+     * @throw NetworkException if the connection is lost, e.g. after a timeout.
+     */
+    virtual void setJointStiffness(
+        const franka_msgs::srv::SetJointStiffness::Request::SharedPtr& req);
+
+    /**
+     * Sets the Cartesian stiffness (for x, y, z, roll, pitch, yaw) in the internal
+     * controller.
+     *
+     * The values set using Robot::SetCartesianStiffness are used in the direction of the
+     * stiffness frame, which can be set with Robot::setK.
+     *
+     * Inputs received by the torque controller are not affected by this setting.
+     *
+     * @param[in] franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr request
+     * @throw CommandException if the Control reports an error.
+     * @throw NetworkException if the connection is lost, e.g. after a timeout.
+     */
+    virtual void setCartesianStiffness(
+        const franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr& req);
+
+    /**
+     * Sets dynamic parameters of a payload.
+     *
+     * @note
+     * This is not for setting end effector parameters, which have to be set in the administrator's
+     * interface.
+     *
+     * @param[in] franka_msgs::srv::SetLoad::Request::SharedPtr request
+     *
+     * @throw CommandException if the Control reports an error.
+     * @throw
+     */
+    virtual void setLoad(const franka_msgs::srv::SetLoad::Request::SharedPtr& req);
+
+    /**
+     * Sets the transformation \f$^{NE}T_{EE}\f$ from nominal end effector to end effector frame.
+     *
+     * The transformation matrix is represented as a vectorized 4x4 matrix in column-major format.
+     *
+     * @param[in] franka_msgs::srv::SetTCPFrame::Request::SharedPtr req
+     *
+     * @throw CommandException if the Control reports an error.
+     * @throw NetworkException if the connection is lost, e.g. after a timeout.
+     */
+    virtual void setTCPFrame(const franka_msgs::srv::SetTCPFrame::Request::SharedPtr& req);
+
+    /**
+     * Sets the transformation \f$^{EE}T_K\f$ from end effector frame to stiffness frame.
+     *
+     * The transformation matrix is represented as a vectorized 4x4 matrix in column-major format.
+     *
+     * @param[in] franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr req.
+     *
+     * @throw CommandException if the Control reports an error.
+     * @throw NetworkException if the connection is lost, e.g. after a timeout.
+     *
+     */
+    virtual void setStiffnessFrame(
+        const franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr& req);
+
+    /**
+     * Changes the collision behavior.
+     *
+     * Set common torque and force boundaries for acceleration/deceleration and constant velocity
+     * movement phases.
+     *
+     * Forces or torques between lower and upper threshold are shown as contacts in the RobotState.
+     * Forces or torques above the upper threshold are registered as collision and cause the robot to
+     * stop moving.
+     *
+     * @param[in] franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr req
+     *
+     * @throw CommandException if the Control reports an error.
+     * @throw NetworkException if the connection is lost, e.g. after a timeout.
+     */
+    virtual void setForceTorqueCollisionBehavior(
+        const franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr& req);
+
+    /**
+     * Changes the collision behavior.
+     *
+     * Set separate torque and force boundaries for acceleration/deceleration and constant velocity
+     * movement phases.
+     *
+     * Forces or torques between lower and upper threshold are shown as contacts in the RobotState.
+     * Forces or torques above the upper threshold are registered as collision and cause the robot to
+     * stop moving.
+     *
+     * @param[in] franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr request msg
+     *
+     * @throw CommandException if the Control reports an error.
+     * @throw NetworkException if the connection is lost, e.g. after a timeout.
+     */
+    virtual void setFullCollisionBehavior(
+        const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr& req);
     
+    /* --- COPY END --- */
+
     /**
     * Get RCLCPP logger object
     *  

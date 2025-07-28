@@ -83,3 +83,110 @@ std::string FrankaRobotWrapper::control_to_string(const ControlMode& mode) {
         return "???";
     }
 }
+
+/* --- START OF COPY --- */
+
+void FrankaRobotWrapper::setJointStiffness(const franka_msgs::srv::SetJointStiffness::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(*write_mutex);
+  std::array<double, 7> joint_stiffness{};
+  std::copy(req->joint_stiffness.cbegin(), req->joint_stiffness.cend(), joint_stiffness.begin());
+  arm->setJointImpedance(joint_stiffness);
+}
+
+void FrankaRobotWrapper::setCartesianStiffness(
+    const franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(*write_mutex);
+  std::array<double, 6> cartesian_stiffness{};
+  std::copy(req->cartesian_stiffness.cbegin(), req->cartesian_stiffness.cend(),
+            cartesian_stiffness.begin());
+  arm->setCartesianImpedance(cartesian_stiffness);
+}
+
+void FrankaRobotWrapper::setLoad(const franka_msgs::srv::SetLoad::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(*write_mutex);
+  double mass(req->mass);
+  std::array<double, 3> center_of_mass{};  // NOLINT [readability-identifier-naming]
+  std::copy(req->center_of_mass.cbegin(), req->center_of_mass.cend(), center_of_mass.begin());
+  std::array<double, 9> load_inertia{};
+  std::copy(req->load_inertia.cbegin(), req->load_inertia.cend(), load_inertia.begin());
+
+  arm->setLoad(mass, center_of_mass, load_inertia);
+}
+
+void FrankaRobotWrapper::setTCPFrame(const franka_msgs::srv::SetTCPFrame::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(*write_mutex);
+
+  std::array<double, 16> transformation{};  // NOLINT [readability-identifier-naming]
+  std::copy(req->transformation.cbegin(), req->transformation.cend(), transformation.begin());
+  arm->setEE(transformation);
+}
+
+void FrankaRobotWrapper::setStiffnessFrame(const franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(*write_mutex);
+
+  std::array<double, 16> transformation{};
+  std::copy(req->transformation.cbegin(), req->transformation.cend(), transformation.begin());
+  arm->setK(transformation);
+}
+
+void FrankaRobotWrapper::setForceTorqueCollisionBehavior(
+    const franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(*write_mutex);
+
+  std::array<double, 7> lower_torque_thresholds_nominal{};
+  std::copy(req->lower_torque_thresholds_nominal.cbegin(),
+            req->lower_torque_thresholds_nominal.cend(), lower_torque_thresholds_nominal.begin());
+  std::array<double, 7> upper_torque_thresholds_nominal{};
+  std::copy(req->upper_torque_thresholds_nominal.cbegin(),
+            req->upper_torque_thresholds_nominal.cend(), upper_torque_thresholds_nominal.begin());
+  std::array<double, 6> lower_force_thresholds_nominal{};
+  std::copy(req->lower_force_thresholds_nominal.cbegin(),
+            req->lower_force_thresholds_nominal.cend(), lower_force_thresholds_nominal.begin());
+  std::array<double, 6> upper_force_thresholds_nominal{};
+  std::copy(req->upper_force_thresholds_nominal.cbegin(),
+            req->upper_force_thresholds_nominal.cend(), upper_force_thresholds_nominal.begin());
+
+  arm->setCollisionBehavior(lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
+                               lower_force_thresholds_nominal, upper_force_thresholds_nominal);
+}
+
+void FrankaRobotWrapper::setFullCollisionBehavior(
+    const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(*write_mutex);
+
+  std::array<double, 7> lower_torque_thresholds_acceleration{};
+  std::copy(req->lower_torque_thresholds_acceleration.cbegin(),
+            req->lower_torque_thresholds_acceleration.cend(),
+            lower_torque_thresholds_acceleration.begin());
+  std::array<double, 7> upper_torque_thresholds_acceleration{};
+  std::copy(req->upper_torque_thresholds_acceleration.cbegin(),
+            req->upper_torque_thresholds_acceleration.cend(),
+            upper_torque_thresholds_acceleration.begin());
+  std::array<double, 7> lower_torque_thresholds_nominal{};
+  std::copy(req->lower_torque_thresholds_nominal.cbegin(),
+            req->lower_torque_thresholds_nominal.cend(), lower_torque_thresholds_nominal.begin());
+  std::array<double, 7> upper_torque_thresholds_nominal{};
+  std::copy(req->upper_torque_thresholds_nominal.cbegin(),
+            req->upper_torque_thresholds_nominal.cend(), upper_torque_thresholds_nominal.begin());
+  std::array<double, 6> lower_force_thresholds_acceleration{};
+  std::copy(req->lower_force_thresholds_acceleration.cbegin(),
+            req->lower_force_thresholds_acceleration.cend(),
+            lower_force_thresholds_acceleration.begin());
+  std::array<double, 6> upper_force_thresholds_acceleration{};
+  std::copy(req->upper_force_thresholds_acceleration.cbegin(),
+            req->upper_force_thresholds_acceleration.cend(),
+            upper_force_thresholds_acceleration.begin());
+  std::array<double, 6> lower_force_thresholds_nominal{};
+  std::copy(req->lower_force_thresholds_nominal.cbegin(),
+            req->lower_force_thresholds_nominal.cend(), lower_force_thresholds_nominal.begin());
+  std::array<double, 6> upper_force_thresholds_nominal{};
+  std::copy(req->upper_force_thresholds_nominal.cbegin(),
+            req->upper_force_thresholds_nominal.cend(), upper_force_thresholds_nominal.begin());
+  arm->setCollisionBehavior(
+      lower_torque_thresholds_acceleration, upper_torque_thresholds_acceleration,
+      lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
+      lower_force_thresholds_acceleration, upper_force_thresholds_acceleration,
+      lower_force_thresholds_nominal, upper_force_thresholds_nominal);
+}
+
+/* --- END OF COPY --- */

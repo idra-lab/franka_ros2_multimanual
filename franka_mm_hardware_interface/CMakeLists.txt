@@ -14,10 +14,6 @@ find_package(pluginlib REQUIRED)
 find_package(Franka 0.13.2 REQUIRED)
 find_package(franka_msgs REQUIRED)
 
-# Include directories
-include_directories(
-  include
-)
 
 # Used files to build the library
 add_library(
@@ -26,18 +22,19 @@ add_library(
   src/franka_wrapper.cpp
   src/lambda_control.cpp
   src/mode_switch_plan.cpp
-)
-
+  src/franka_param_service_server.cpp
+  )
+  
 # Libraries used in the files
 ament_target_dependencies(
   ${PROJECT_NAME}
-  Franka
-  franka_msgs
   rclcpp
   hardware_interface
   pluginlib
-)
-
+  franka_msgs
+  Franka
+  )
+    
 # Export include directories
 target_include_directories(
   ${PROJECT_NAME}
@@ -46,7 +43,7 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>
     ${EIGEN3_INCLUDE_DIRS}
 )
-
+    
 # Export the plugin if needed (for hardware interface)
 pluginlib_export_plugin_description_file(hardware_interface franka_mm_hardware_interface.xml)
 
