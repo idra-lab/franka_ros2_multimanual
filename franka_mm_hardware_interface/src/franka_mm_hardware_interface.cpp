@@ -56,13 +56,17 @@ HardwareInterface::on_init (
         return hardware_interface::CallbackReturn::ERROR;
     }
 
+    // Check RT config
+    franka::RealtimeConfig rt_config = franka::RealtimeConfig::kEnforce;
+    if (!franka::hasRealtimeKernel()) {
+        rt_config = franka::RealtimeConfig::kIgnore;
+        RCLCPP_WARN(get_logger(), "RT kernel is not in use");
+    }
+
     auto name_it = name_begin;
     auto ip_it = ip_begin;
     for ( long i = 0; i < ip_size; ++i ) {
-        FrankaRobotWrapper frk;
-
-        frk.name = name_it->str();
-        frk.ip = ip_it->str();
+        FrankaRobotWrapper frk(name_it->str(), ip_it->str());
 
         arms.push_back(std::move(frk));
 
@@ -87,28 +91,17 @@ HardwareInterface::on_configure(const rclcpp_lifecycle::State& prev_state) {
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    franka::RealtimeConfig rt_config = franka::RealtimeConfig::kEnforce;
-    if (!franka::hasRealtimeKernel()) {
-        rt_config = franka::RealtimeConfig::kIgnore;
-        RCLCPP_WARN(get_logger(), "RT kernel is not in use");
-    }
+    executor_thread = std::make_unique<std::thread>([this](){
+        rclcpp::executors::SingleThreadedExecutor tassadar;
 
-    for ( long i = 0; i < arms.size(); ++i ) {
-        RCLCPP_INFO(get_logger(), "Connection with arm %s @ %s", 
-            arms[i].name.c_str(), arms[i].ip.c_str());
-
-        arms[i].arm = std::make_unique<franka::Robot>(arms[i].ip, rt_config);
-        //TODO? setDefaultBehavior(frk)
+        for (const FrankaRobotWrapper& robot : arms) {
+            tassadar.add_node(robot.param_server);
+        }
         
-        // Controller state
-        arms[i].control_mode = FrankaRobotWrapper::ControlMode::INACTIVE;
-
-        arms[i].model = std::make_unique<franka::Model>(arms[i].arm->loadModel());
-
-        // arms[i].param_server = std::make_shared(rclcpp::NodeOptions(), arms[i]);
-
-        RCLCPP_INFO(get_logger(), "Done!");
-    }
+        while (rclcpp::ok && !stopped.load()) {
+            tassadar.spin_some();
+        }
+    });
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -139,6 +132,9 @@ HardwareInterface::on_shutdown(const rclcpp_lifecycle::State& prev_state) {
     for (auto& robot : arms) {
         robot.reset_controller();
     }
+
+    stopped.store(true);
+    executor_thread->join();
     
     RCLCPP_INFO(get_logger(), "Done!");
 

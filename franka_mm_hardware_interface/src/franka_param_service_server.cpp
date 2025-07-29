@@ -15,9 +15,10 @@
 #include "franka_mm_hardware_interface/franka_param_service_server.hpp"
 #include "franka_mm_hardware_interface/franka_wrapper.hpp"
 
-FrankaParamServiceServer::FrankaParamServiceServer(const rclcpp::NodeOptions& options,
-                                                   std::shared_ptr<FrankaRobotWrapper> robot)
-    : rclcpp::Node("service_server", options), robot_(std::move(robot)) {
+FrankaParamServiceServer::FrankaParamServiceServer(const std::string& node_name,
+                                                   const rclcpp::NodeOptions& options,
+                                                   FrankaRobotWrapper* robot)
+    : rclcpp::Node(node_name, options), robot_(robot) {
   set_joint_stiffness_service_ = create_service<franka_msgs::srv::SetJointStiffness>(
       "~/set_joint_stiffness",
       [this](const std::shared_ptr<franka_msgs::srv::SetJointStiffness::Request>& request,

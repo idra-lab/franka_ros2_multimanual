@@ -8,6 +8,30 @@
 
 #include <Eigen/Dense>
 
+FrankaRobotWrapper::FrankaRobotWrapper(
+    const std::string& r_name,
+    const std::string& r_ip,
+
+    const franka::RealtimeConfig& rt_config
+) : name(r_name), ip(r_ip) { 
+    RCLCPP_INFO(get_logger(), "Connection with arm %s @ %s", name.c_str(), ip.c_str());
+
+    arm = std::make_unique<franka::Robot>(ip, rt_config);
+    model = std::make_unique<franka::Model>(arm->loadModel());
+    //TODO? setDefaultBehavior(frk)
+    
+    // Controller state
+    control_mode = ControlMode::INACTIVE;
+
+    param_server = std::make_shared<FrankaParamServiceServer>(
+        name + "_service_server",
+        rclcpp::NodeOptions(),
+        this
+    );
+
+    RCLCPP_INFO(get_logger(), "Done!");
+}
+
 void FrankaRobotWrapper::copy_state_to_ifs(const franka::RobotState& state) {
     if_states.q     = state.q;
     if_states.qd    = state.dq;

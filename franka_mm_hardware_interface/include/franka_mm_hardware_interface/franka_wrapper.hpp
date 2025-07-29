@@ -274,7 +274,7 @@ class FrankaRobotWrapper {
      */
     ControlPtr control = nullptr;
     
-    std::unique_ptr<FrankaParamServiceServer> param_server;
+    std::shared_ptr<FrankaParamServiceServer> param_server;
 
     /**
      * Current operational mode of the robot
@@ -289,6 +289,19 @@ class FrankaRobotWrapper {
     bool elbow_control = false;
 
     RCLCPP_SHARED_PTR_DEFINITIONS(FrankaRobotWrapper);
+
+    FrankaRobotWrapper(
+        const std::string& name,
+        const std::string& ip,
+
+        const franka::RealtimeConfig& rt_config = franka::RealtimeConfig::kEnforce
+    );
+    ~FrankaRobotWrapper() = default;
+
+    FrankaRobotWrapper(const FrankaRobotWrapper&)                = delete;
+    FrankaRobotWrapper& operator=(const FrankaRobotWrapper&)     = delete;
+    FrankaRobotWrapper(FrankaRobotWrapper&&) noexcept            = default;        
+    FrankaRobotWrapper& operator=(FrankaRobotWrapper&&) noexcept = default;
 
     /**
      * Populates the values of if_state (q, qd, tau, x) using a robot state.

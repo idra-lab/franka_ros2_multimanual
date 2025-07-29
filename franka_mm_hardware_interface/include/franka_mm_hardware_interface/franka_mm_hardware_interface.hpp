@@ -254,6 +254,10 @@ private:
     */  
     std::unique_ptr<ModeSwitchPlan> mode_switch_plan;  
 
+    std::unique_ptr<std::thread> executor_thread;
+
+    std::atomic<bool> stopped = false;
+
     /**
     * Parameter used to regulate if franka::limitRate should be called in the control loops.
     * If set to true, limitRate function will NOT be used.

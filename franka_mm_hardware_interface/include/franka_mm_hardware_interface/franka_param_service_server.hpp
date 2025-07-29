@@ -35,9 +35,10 @@ class FrankaRobotWrapper;
 class FrankaParamServiceServer : public rclcpp::Node {
  public:
   FrankaParamServiceServer(
+    const std::string& node_name,
     const rclcpp::NodeOptions& options, 
-    std::shared_ptr<FrankaRobotWrapper> robot
- );
+    FrankaRobotWrapper* robot
+ ); 
 
  private:
   /**
@@ -136,7 +137,7 @@ class FrankaParamServiceServer : public rclcpp::Node {
   void setLoadCallback(const franka_msgs::srv::SetLoad::Request::SharedPtr& request,
                        const franka_msgs::srv::SetLoad::Response::SharedPtr& response);
 
-  std::shared_ptr<FrankaRobotWrapper> robot_;
+  FrankaRobotWrapper* robot_;
 
   rclcpp::Service<franka_msgs::srv::SetJointStiffness>::SharedPtr set_joint_stiffness_service_;
   rclcpp::Service<franka_msgs::srv::SetCartesianStiffness>::SharedPtr
