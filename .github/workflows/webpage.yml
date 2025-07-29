@@ -6,7 +6,7 @@ on:
       environment:
         description: 'Which environment to deploy to'
         required: true
-        default: 'staging'
+        default: 'github-pages'
   push:
     branches:
       - main
