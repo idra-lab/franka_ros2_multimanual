@@ -2,11 +2,6 @@ name: Web Page Build
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Which environment to deploy to'
-        required: true
-        default: 'github-pages'
   push:
     branches:
       - main
