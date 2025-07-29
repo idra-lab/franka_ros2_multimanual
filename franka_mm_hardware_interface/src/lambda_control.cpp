@@ -242,10 +242,12 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
                 Eigen::Vector3d position_d(robot.if_cmds.qx[0], robot.if_cmds.qx[1], robot.if_cmds.qx[2]);
                 Eigen::Quaterniond orientation_d(robot.if_cmds.qx[3], robot.if_cmds.qx[4], robot.if_cmds.qx[5], robot.if_cmds.qx[6]); // w, x, y, z
 
+                /*
                 RCLCPP_INFO(robot.get_logger(), "%f %f %f %f %f %f %f ", 
                         robot.if_cmds.qx[0], robot.if_cmds.qx[1], robot.if_cmds.qx[2], robot.if_cmds.qx[3],
                         robot.if_cmds.qx[4], robot.if_cmds.qx[5], robot.if_cmds.qx[6]);
-
+                */
+               
                 // get state variables
                 std::array<double, 7> coriolis_array  = robot.model->coriolis(state);
                 std::array<double, 42> jacobian_array = robot.model->zeroJacobian(franka::Frame::kEndEffector, state);
