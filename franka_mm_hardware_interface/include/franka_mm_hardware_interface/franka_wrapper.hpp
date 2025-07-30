@@ -50,18 +50,12 @@ class FrankaRobotWrapper {
     public:
 
     /**
-     * Array of doubles
-     */
-    template <std::size_t size>
-    using DoubleArr  = std::array<double, size>;
-
-    /**
-     * Array of six doubles used to represent cartesian velocities
+     * Array of six doubles.
      */
     using Arr6       = std::array<double, 6>;
     
     /**
-     * Array of seven doubles used to represent joint variables
+     * Array of seven doubles.
      */
     using Arr7       = std::array<double, 7>;
 
@@ -84,26 +78,6 @@ class FrankaRobotWrapper {
      *    with \f$\alpha = -0.467002423653011\f$ \f$rad\f$
      */
     using ElbowArr   = std::array<double, 2>; 
-
-    /**
-     * Unique pointer to a robot
-     */
-    using FrankaPtr  = std::unique_ptr<franka::Robot>;
-
-    /** 
-     * Unique pointer to the thread used to spawn the control of a robot.
-     */
-    using ControlPtr = std::unique_ptr<std::thread>;
-
-    /**
-     * Unique pointer to the robot model
-     */
-    using ModelPtr   = std::unique_ptr<franka::Model>;
-
-    /**
-     * Unique pointer to a mutex
-     */
-    using MutexPtr   = std::unique_ptr<std::mutex>;
     
     /**
      * Enumeration class used to describe controller's possible states.
@@ -138,10 +112,13 @@ class FrankaRobotWrapper {
         Arr7 tau;
 
         /**
-         * Cartesian position values 
+         * Cartesian pose values, expressed with a column-major homogeneous transformation matrix.
          */
         Arr16 x;
 
+        /**
+         * Cartesian pose values, expressed as a position + quaternion
+         */
         Arr7 qx;
 
         /**
@@ -170,10 +147,13 @@ class FrankaRobotWrapper {
         Arr7 tau;
 
         /**
-         * Cartesian position values, expressed in column-major format.
+         * Cartesian pose values, expressed with a column-major homogeneous transformation matrix.
          */
         Arr16 x;
-        
+
+        /**
+         * Cartesian pose values, expressed as a position + quaternion
+         */
         Arr7 qx;
 
         /**
@@ -194,7 +174,7 @@ class FrankaRobotWrapper {
     StateValues if_states;
 
     /**
-     * Control values exported and writible by the external controllers.
+     * Control values exported and writable by the external controllers.
      */
     ControlValues exported_cmds;
 
@@ -213,7 +193,7 @@ class FrankaRobotWrapper {
     /**
      * Model of the robot.
      */
-    ModelPtr model;
+    std::unique_ptr<franka::Model> model;
 
     /**
      * Boolean value that signals if the robot has to update his joint position (q) values.
@@ -225,7 +205,7 @@ class FrankaRobotWrapper {
     bool first_joint_position_update = false;
 
     /**
-     * Boolean value that signals if the robot has to update his cartesian pose (x) values.
+     * Boolean value that signals if the robot has to update his cartesian pose (x, qx) values.
      *
      * This is done because when the position control is being activated, 
      * if_cmds and exported_cmds must be initialized with the same value of 
@@ -255,42 +235,54 @@ class FrankaRobotWrapper {
     /**
      * Mutex used to handle concurrency in the read phase of the robot's state.
      */
-    MutexPtr control_mutex = std::make_unique<std::mutex>();
+    std::unique_ptr<std::mutex> control_mutex = std::make_unique<std::mutex>();
 
     /**
      * Mutex used to handle concurrency in the write phase of the robot command.
      * 
      * This is mainly used to avoid partial readings from exported_cmds.
      */
-    MutexPtr write_mutex = std::make_unique<std::mutex>();
+    std::unique_ptr<std::mutex> write_mutex = std::make_unique<std::mutex>();
 
     /**
      * Unique pointer to the Robot object of libfranka, that is used to communicate
      * commands and read states.
      */
-    FrankaPtr arm = nullptr;
+    std::unique_ptr<franka::Robot> arm = nullptr;
 
     /**
      * Unique pointer to the thread used to handle the robot controller.
      */
-    ControlPtr control = nullptr;
+    std::unique_ptr<std::thread> control = nullptr;
     
-    std::shared_ptr<FrankaParamServiceServer> param_server;
-
     /**
      * Current operational mode of the robot
      */
     ControlMode control_mode = ControlMode::INACTIVE;
-
-
+    
     /**
      * Flag that signals if the robot is also being controlled with elbow inferfaces.
      * This flag can be set to true if and only if control_mode is set to CARTESIAN_VELOCITY or CARTESIAN_POSITION
      */
     bool elbow_control = false;
 
+    /**
+     * Pointer to the service servers that is used to dynamically change parameters
+     * 
+     * @see FrankaParamServiceServer
+     */
+    std::shared_ptr<FrankaParamServiceServer> param_server;
+
+
     RCLCPP_SHARED_PTR_DEFINITIONS(FrankaRobotWrapper);
 
+    /**
+     * Creates a wrapper the wrapper and establishes a connection
+     * 
+     * @param name      Name of the robot
+     * @param ip        IP of the robot
+     * @param rt_config Real-Time configuration mode
+     */
     FrankaRobotWrapper(
         const std::string& name,
         const std::string& ip,
@@ -305,14 +297,16 @@ class FrankaRobotWrapper {
     FrankaRobotWrapper& operator=(FrankaRobotWrapper&&) noexcept = default;
 
     /**
-     * Populates the values of if_state (q, qd, tau, x) using a robot state.
+     * Populates the values of if_state (q, qd, tau, x, qx) using a robot state.
+     * This function handles also the correct read of the first
+     * position, pose and elbow states.
      * 
      * @param state Source state used to read the values
      */
     void copy_state_to_ifs(const franka::RobotState& state);
 
     /**
-     * This function is used to activate a controller thread in a RobotUnit object.
+     * This function activates a controller with the desired modality.
      *
      * @param mode           Operational mode of the controller
      * @param limit_override If True, skips fraka::limitRate before sending a command.
@@ -320,7 +314,7 @@ class FrankaRobotWrapper {
     void setup_controller(ControlMode mode, bool limit_override);
 
     /**
-     * Stops the controller of a robot.
+     * Stops the controller of the robot.
      *
      * This function sets the operational mode of the robot to inactive, 
      * waits the control thread to join and stops the robot.
@@ -331,7 +325,7 @@ class FrankaRobotWrapper {
 
     /**
      * Returns a boolen that tells if the controller is commanded in 
-     * cartesian pose or velocity.
+     * cartesian pose, velocity or impedance.
      * 
      * @returns True if the controller is commandend in cartesian mode, False otherwise. 
      */

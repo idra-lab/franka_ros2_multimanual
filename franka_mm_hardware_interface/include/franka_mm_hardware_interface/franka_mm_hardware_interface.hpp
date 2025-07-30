@@ -45,8 +45,14 @@
 class HardwareInterface : public hardware_interface::SystemInterface {
 public:
 
+    /**
+     * Identification name of the cartesian pose interface (expressed as position + quaternion)
+     */
     const std::string HW_IF_CART_POSITION_Q = "cartesian_pose";
 
+    /**
+     * names of the cartesian pose (pos + quat) interfaces
+     */
     const std::vector<std::string> cartesian_pose_q_interface_names = {"x", "y", "z", "qw", "qx", "qy", "qz"};
 
     /**
@@ -90,7 +96,9 @@ public:
     * both to be expressed in CSV format:
     * - robot_names: ordered list of robot's name
     * - robot_ips:   ordered list of robot's name
-    *
+    * Creates the @link FrankaRobotWapper @endlink objects,
+    * that handle the parameter and connections of the robots
+    * 
     * @param hardware_info SystemInterface hardware info
     *
     * @return Status of the function after the call
@@ -100,9 +108,9 @@ public:
     ) override;
 
     /**
-    * Creates the connection between the machine and the robots
-    * and configures the controller as inactive.
-    *
+    * Starts the threads of the robot services to on an
+    * executor
+    * 
     * @param prev_state Previous state in the lifecycle    
     *
     * @return Status of the function after the call
@@ -116,7 +124,7 @@ public:
     ) override;
 
     /**
-    * Stops the robot and their controllers
+    * Stops the robot, the controllers and the service servers.
     *
     * @param prev_state Previous state in the lifecycle
     *
@@ -127,7 +135,7 @@ public:
     ) override;
 
     /**
-    * Does the first reading of the robots
+    * Does the first state reading on the robots
     *
     * @param prev_state Previous state in the lifecycle
     *
@@ -156,8 +164,10 @@ public:
     /**
     * Exports the state interfaces for each robot.
     * 
-    * Exports the reading of states from if_states, giving access
-    * to joint position, velocities and torques for each robot.
+    * Exports the state interfaces for each robot giving access to: 
+    * - Joint position, velocities and torques
+    * - Cartesian pose, expressed as transformation matrix
+    * - Cartesian pose, expressed as position + quaternion
     *
     * @return List of state interfaces to be exported
     */
@@ -167,8 +177,10 @@ public:
     * Exports the command interfaces for each robot.
     * 
     * Gives write access to the variables of exported_cmds, making possible to
-    * communicate command with the robot. The interfaces exported for each robot are
-    * joint positions, velocities and torques as well cartesian velocities.
+    * communicate command with the robot. The interfaces exported for each robot are:
+    * - Joint position, velocities and torques
+    * - Cartesian pose, expressed as transformation matrix
+    * - Cartesian pose, expressed as position + quaternion
     *
     * @return List of command interfaces to be exported
     */
@@ -254,8 +266,14 @@ private:
     */  
     std::unique_ptr<ModeSwitchPlan> mode_switch_plan;  
 
+    /**
+     * Thread of the executor used for running the service servers.
+     */
     std::unique_ptr<std::thread> executor_thread;
 
+    /**
+     * Atomic boolean for signaling the stopping of the interface.
+     */
     std::atomic<bool> stopped = false;
 
     /**

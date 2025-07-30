@@ -36,7 +36,7 @@
  * It is populated by a two pairs of vectors: the first pair describe 
  * which robot is activating or deactivating a particular interface. 
  * The second pair contains the indexes of the robot that are activating
- * or deactiviting their elbow interface.
+ * or deactivating their elbow interface.
  * 
  * @author Alessandro Moscatelli
  */
@@ -96,7 +96,7 @@ ModeSwitchPlan(
 bool is_being_activated(long robot_index) const;
 
 /**
- * Tells if the robot will activate an cartesian interface, either pose or cartesian.
+ * Tells if the robot will activate an cartesian interface, either pose, velocity or impedance.
  * 
  * @param robot_index Index of the robot referring to the arms array
  * 
