@@ -26,8 +26,9 @@ bool ModeSwitchPlan::is_activating_cartesian(long robot_index) const {
         [&](const auto& item) { 
             return 
                 item.first == robot_index && (
-                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_POSITION || 
-                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_VELOCITY
+                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_POSITION  || 
+                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_VELOCITY  ||
+                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_IMPEDANCE ||
                 ); 
         }
     );
