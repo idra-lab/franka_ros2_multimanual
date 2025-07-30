@@ -45,7 +45,7 @@ jobs:
           retention-days: 90
 
   deploy:
-    needs: doxygen-build
+    needs: build
 
     permissions:
       contents: read
