@@ -209,8 +209,9 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
     return [&robot, limit_override](){
 
         // Compliance parameters
-        const double translational_stiffness{150.0};
-        const double rotational_stiffness{10.0};
+        double dt = 1.0 / 1000.0;
+        const double translational_stiffness{500.0};
+        const double rotational_stiffness{100.0};
         Eigen::MatrixXd stiffness(6, 6), damping(6, 6);
         stiffness.setZero();
         stiffness.topLeftCorner(3, 3) << translational_stiffness * Eigen::MatrixXd::Identity(3, 3);
@@ -221,7 +222,9 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
         damping.bottomRightCorner(3, 3) << 2.0 * sqrt(rotational_stiffness) *
                                                 Eigen::MatrixXd::Identity(3, 3);
 
-        robot.arm->control([&robot, limit_override, stiffness, damping](const franka::RobotState& state, const franka::Duration& /*period*/) -> franka::Torques {
+        Eigen::Matrix<double, 6, 1> error_old = Eigen::Matrix<double, 6, 1>::Zero();
+
+        robot.arm->control([&robot, limit_override, stiffness, damping, dt, &error_old](const franka::RobotState& state, const franka::Duration& /*period*/) -> franka::Torques {
             {
                 std::lock_guard<std::mutex> lock(*robot.control_mutex);
                 robot.current_state = state;
@@ -233,21 +236,10 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
                 std::lock_guard<std::mutex> lock(*robot.write_mutex);
 
                 // equilibrium point is the setted state
-                //Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(robot.if_cmds.x.data()));
-                //Eigen::Vector3d position_d(initial_transform.translation());
-                //Eigen::Quaterniond orientation_d(initial_transform.rotation());
-
-                // equilibrium point is the setted state
                 Eigen::Affine3d transform_d(Eigen::Matrix4d::Map(state.O_T_EE.data()));
                 Eigen::Vector3d position_d(robot.if_cmds.qx[0], robot.if_cmds.qx[1], robot.if_cmds.qx[2]);
                 Eigen::Quaterniond orientation_d(robot.if_cmds.qx[3], robot.if_cmds.qx[4], robot.if_cmds.qx[5], robot.if_cmds.qx[6]); // w, x, y, z
 
-                /*
-                RCLCPP_INFO(robot.get_logger(), "%f %f %f %f %f %f %f ", 
-                        robot.if_cmds.qx[0], robot.if_cmds.qx[1], robot.if_cmds.qx[2], robot.if_cmds.qx[3],
-                        robot.if_cmds.qx[4], robot.if_cmds.qx[5], robot.if_cmds.qx[6]);
-                */
-               
                 // get state variables
                 std::array<double, 7> coriolis_array  = robot.model->coriolis(state);
                 std::array<double, 42> jacobian_array = robot.model->zeroJacobian(franka::Frame::kEndEffector, state);
@@ -258,7 +250,7 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
                 Eigen::Map<const Eigen::Matrix<double, 7, 1>> q(state.q.data());
                 Eigen::Map<const Eigen::Matrix<double, 7, 1>> dq(state.dq.data());
                 Eigen::Affine3d transform(Eigen::Matrix4d::Map(state.O_T_EE.data()));
-                Eigen::Vector3d position(transform.translation());
+                Eigen::Vector3d position(transform.translation());  
                 Eigen::Quaterniond orientation(transform.rotation());
             
                 // compute error to desired equilibrium pose
@@ -278,10 +270,12 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
                 error.tail(3) << -transform.rotation() * error.tail(3);
             
                 // compute control
-                Eigen::VectorXd tau_task(7), tau_d(7);
+                Eigen::VectorXd force_task(6), tau_task(7), tau_d(7);
             
                 // Spring damper system with damping ratio=1
-                tau_task << jacobian.transpose() * (-stiffness * error - damping * (jacobian * dq));
+                force_task << (-stiffness * error - damping * ((error - error_old) / dt));
+                error_old = error;
+                tau_task << jacobian.transpose() * force_task;
                 tau_d << tau_task + coriolis;
             
                 std::array<double, 7> tau_d_array{};
