@@ -4,11 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Idra Franka Launch</title>
+  <link rel="icon" type="image/png" href="images/favicon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="static/css/style.css" />
+
+  <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
 </head>
 <body>
   <div class="container">
@@ -30,9 +33,8 @@
             <iframe src="docs/html/index.html"></iframe>
         </div>
         <div id="home" class="text-container page-content">
-            <h2>Welcome!</h2>
-            <p>This is your landing page content. You can add more here.</p>
-        </div>
+            <zero-md src="../README.md"></zero-md>
+        </div>        
     </div>
   </div>
 
