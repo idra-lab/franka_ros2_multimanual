@@ -27,7 +27,11 @@ jobs:
       - name: Installs
         run: |
           sudo apt-get update
-          sudo apt-get install -y git wget doxygen texlive-latex-base
+          sudo apt-get install -y git wget doxygen 
+          
+      - name: LaTeX installs 
+        run: |
+          sudo apt install texlive-latex-base pdftexcmds
 
       - name: Build docs
         run: |
@@ -36,7 +40,7 @@ jobs:
         
       - name: Build report
         run: |
-          cd webdocs
+        cd webdocs
           latex report.tex -o report.pdf
 
       - name: Upload GitHub Pages artifact
