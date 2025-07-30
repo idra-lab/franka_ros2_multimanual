@@ -139,7 +139,7 @@ class GearPick(Node):
 
         self.get_logger().info(f"Right going to swap position")
         right_go_ahead = [
-            0.425094913300203400,
+            0.428094913300203400,
             -0.39193761493704543,
             0.581332818025366700,
             -0.49825944907721800,
