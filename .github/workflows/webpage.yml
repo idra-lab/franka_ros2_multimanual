@@ -8,7 +8,7 @@ on:
       - internshipper-bimanual
 
 jobs:
-  doxygen-build:
+  build:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -27,12 +27,16 @@ jobs:
       - name: Installs
         run: |
           sudo apt-get update
-          sudo apt-get install -y git wget doxygen
+          sudo apt-get install -y git wget doxygen texlive-latex-base
 
       - name: Build docs
         run: |
           cd webdocs
           doxygen doxyfile
+        
+      - name: Build report
+        run: |
+          latex report.tex -o report.pdf
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3.0.1
