@@ -31,7 +31,13 @@ jobs:
           
       - name: LaTeX installs 
         run: |
-          sudo apt install texlive-latex-base
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-luatex \
+            latexmk
 
       - name: Build docs
         run: |
