@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Idra Franka Launch</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="static/css/style.css" />
 </head>
 <body>
@@ -12,38 +15,27 @@
     <nav>
         <h3>Navigation</h3>
         <ul>
-            <li><a onclick="showPage('home')">Home</a></li>
-            <li><a onclick="showPage('report')">Report</a></li>
-            <li><a onclick="showPage('doxygen')">Documentation</a></li>
+            <div class="nav-highlighter"></div>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#report">Report</a></li>
+            <li><a href="#doxygen">Documentation</a></li>
         </ul>
     </nav>
 
     <div class="main-content">
-        <div id="report" class="pdf-container hidden">
+        <div id="report" class="pdf-container page-content">
             <embed src="Franka_Report.pdf" type="application/pdf" />
         </div>
-        <div id="doxygen" class="doxygen-container hidden">
-            <iframe src="docs/html/index.html" style="width:100%; height:100%; border:none;"></iframe>
+        <div id="doxygen" class="doxygen-container page-content">
+            <iframe src="docs/html/index.html"></iframe>
         </div>
-        <div id="home" class="text-container hidden">
-            <h2 style="padding: 20px;">Welcome!</h2>
-            <p style="padding: 20px;">This is your landing page content. You can add more here.</p>
+        <div id="home" class="text-container page-content">
+            <h2>Welcome!</h2>
+            <p>This is your landing page content. You can add more here.</p>
         </div>
     </div>
   </div>
 
-  <script>
-    function showPage(pageId) {
-        const pages = ['doxygen', 'home', 'report'];
-        pages.forEach(id => {
-            document.getElementById(id).classList.add('hidden');
-        });
-        document.getElementById(pageId).classList.remove('hidden');
-    }
-
-    window.onload = function() {
-        showPage('home');
-    };
-  </script>
+  <script src="static/js/main.js"></script>
 </body>
 </html>
