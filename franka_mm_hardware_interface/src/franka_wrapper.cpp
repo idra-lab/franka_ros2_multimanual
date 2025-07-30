@@ -86,9 +86,11 @@ void FrankaRobotWrapper::setup_controller(ControlMode mode, bool limit_override)
     } else if (mode == ControlMode::EFFORT) {
         startController = LambdaControl::startJointEffortControl(*this, limit_override);
     } else if (mode == ControlMode::CARTESIAN_POSITION) {
-        startController = LambdaControl::startCartesianImpedanceControl(*this, limit_override);
+        startController = LambdaControl::startCartesianPositionControl(*this, limit_override);
     } else if (mode == ControlMode::CARTESIAN_VELOCITY) {
         startController = LambdaControl::startCartesianVelocityControl(*this, limit_override);
+    } else if (mode == ControlMode::CARTESIAN_IMPEDANCE) {
+        startController = LambdaControl::startCartesianImpedanceControl(*this, limit_override);
     } else {
         control.reset(nullptr);
         return;
@@ -124,7 +126,8 @@ void FrankaRobotWrapper::reset_controller() {
 
 bool FrankaRobotWrapper::is_cartesian() const {
     return control_mode == ControlMode::CARTESIAN_POSITION ||
-           control_mode == ControlMode::CARTESIAN_VELOCITY;
+           control_mode == ControlMode::CARTESIAN_VELOCITY ||
+           control_mode == ControlMode::CARTESIAN_IMPEDANCE;
 }
 
 std::string FrankaRobotWrapper::control_to_string(const ControlMode& mode) {
@@ -141,6 +144,8 @@ std::string FrankaRobotWrapper::control_to_string(const ControlMode& mode) {
         return "cartesian position";
         case ControlMode::CARTESIAN_VELOCITY:
         return "cartesian velocity";
+        case ControlMode::CARTESIAN_IMPEDANCE:
+        return "cartesian impedance";
         default:
         return "???";
     }

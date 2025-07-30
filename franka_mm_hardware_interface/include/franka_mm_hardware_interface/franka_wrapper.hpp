@@ -114,7 +114,8 @@ class FrankaRobotWrapper {
         VELOCITY,
         EFFORT,
         CARTESIAN_POSITION,
-        CARTESIAN_VELOCITY
+        CARTESIAN_VELOCITY,
+        CARTESIAN_IMPEDANCE
     };
 
     /**
