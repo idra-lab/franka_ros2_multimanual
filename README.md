@@ -41,11 +41,11 @@ ros2 launch idra_franka_launch bimanual.launch.py left_ip:=<left_ip> right_ip:=<
 
 ## Test
 
-The default launch file loads all the controllers that are defined inside `franka_mm_control/config/basic_controller.yaml`, activating the joint velocity controller by default. To change the default behavior change the launch file or use `rqt_controller_manager` package.
+The default launch file loads all the controllers that are defined inside `franka_mm_control/config/basic_controller.yaml`, activating the cartesian impedance controller by default. To change the default behavior change the launch file or use `rqt_controller_manager` package.
 
 Inside `franka_mm_control/scripts` there are some basic scripts for testing the various controller types implemented inside te robot hardware interface.
-To launch velocity control script:
+To launch impedance control script:
 
 ```
-ros2 run franka_mm_control velocity_test.py
+ros2 run franka_mm_control cart_impedance_test.py
 ```
