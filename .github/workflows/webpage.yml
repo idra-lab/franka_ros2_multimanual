@@ -31,7 +31,7 @@ jobs:
           
       - name: LaTeX installs 
         run: |
-          sudo apt install texlive-latex-base pdftexcmds
+          sudo apt install texlive-latex-base
 
       - name: Build docs
         run: |
@@ -41,7 +41,7 @@ jobs:
       - name: Build report
         run: |
           cd webdocs
-          latex report.tex -o report.pdf
+          latexmk -pdf report.tex
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3.0.1
