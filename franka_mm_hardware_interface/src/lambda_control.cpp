@@ -95,9 +95,20 @@ std::function<void()> LambdaControl::startJointEffortControl(FrankaRobotWrapper&
                 robot.copy_state_to_ifs(state);
             }
 
-            {
+            {   
                 std::lock_guard<std::mutex> lock(*robot.write_mutex);
-                franka::Torques out = franka::Torques(robot.if_cmds.tau);
+                
+                std::array<double, 7> coriolis_array = robot.model->coriolis(state);
+                Eigen::Map<const Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
+                Eigen::Map<const Eigen::Matrix<double, 7, 1>> tau_d(robot.if_cmds.tau.data());
+                
+                Eigen::VectorXd tau_out(7);
+                tau_out << tau_d + coriolis;
+
+                std::array<double, 7> tau_d_array{};
+                Eigen::VectorXd::Map(&tau_d_array[0], 7) = tau_out;
+
+                franka::Torques out = franka::Torques(tau_d_array);
                 if (!limit_override) {
                     out.tau_J =
                         franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
