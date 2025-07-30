@@ -44,6 +44,9 @@ namespace LambdaControl {
     /**
      * Return a function that, if called, starts a joint position control on the robot.
      * 
+     * @warning This controller requires an extremely smooth trajectory to be controlled,
+     * so it's suggested to use impedance control. 
+     * 
      * @param robot Robot where the controller will be activated
      * @param limit_override If set to False, the controller will use franka::limitRate.
      * 
@@ -73,6 +76,10 @@ namespace LambdaControl {
 
     /**
      * Return a function that, if called, starts a cartesian pose control on the robot.
+     * This controller is controlled only by the matrix (x) interface.
+     * 
+     * @warning This controller requires an extremely smooth trajectory to be controlled,
+     * so it's suggested to use impedance control. 
      * 
      * @param robot Robot where the controller will be activated
      * @param limit_override If set to False, the controller will use franka::limitRate.
@@ -83,6 +90,7 @@ namespace LambdaControl {
     
     /**
      * Return a function that, if called, starts a cartesian position control on the robot.
+     * This controller is controlled only by the position + quaternion (qx) interface.
      * 
      * @param robot Robot where the controller will be activated
      * @param limit_override If set to False, the controller will use franka::limitRate.
@@ -93,6 +101,8 @@ namespace LambdaControl {
     
     /**
      * Return a function that, if called, starts a cartesian impedance control on the robot.
+     * 
+     * @note This controller could also implement the error in cartesian velocity.
      * 
      * @param robot Robot where the controller will be activated
      * @param limit_override If set to False, the controller will use franka::limitRate.
