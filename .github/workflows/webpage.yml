@@ -36,6 +36,7 @@ jobs:
         
       - name: Build report
         run: |
+          cd webdocs
           latex report.tex -o report.pdf
 
       - name: Upload GitHub Pages artifact
