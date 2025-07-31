@@ -60,8 +60,9 @@ controller_interface::CallbackReturn PoseReader::on_configure(const rclcpp_lifec
 }
 
 controller_interface::return_type PoseReader::update(const rclcpp::Time&, const rclcpp::Duration&) {
+    using interfaces::names::cartesian_pose_interface_names;
     using interfaces::names::cartesian_pose_q_interface_names;
-
+    
     std_msgs::msg::Float64MultiArray msg;
     
     msg.data = {};

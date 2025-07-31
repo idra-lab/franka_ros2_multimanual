@@ -27,7 +27,7 @@ controller_interface::InterfaceConfiguration PositionReader::state_interface_con
 
     std::vector<std::string> state_interface_names;
     
-    state_interface_names.reserve( * robot_names.size());
+    state_interface_names.reserve(joint_interface_names.size() * robot_names.size());
     for (const auto& robot_name : robot_names) {
         for (long unsigned i = 0; i < joint_interface_names.size(); ++i) {
             state_interface_names.push_back(
