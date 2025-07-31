@@ -13,13 +13,13 @@ This package depends on [franka_ros2](https://github.com/frankarobotics/franka_r
 
 To compile the package:
 
-```
+```shell
 colcon build --symlink-install
 ```
 
 Remember to source the workspace:
 
-```
+```shell
 source install/setup.bash
 ```
 
@@ -29,13 +29,13 @@ There is a basic launcher to launch the bimanual implementation of the two robot
 
 For running the simulated environment:
 
-```
+```shell
 ros2 launch idra_franka_launch bimanual.launch.py use_gazebo:=true
 ```
 
 For connection with the real robots:
 
-```
+```shell
 ros2 launch idra_franka_launch bimanual.launch.py left_ip:=<left_ip> right_ip:=<right_ip>
 ```
 
@@ -46,6 +46,6 @@ The default launch file loads all the controllers that are defined inside `frank
 Inside `franka_mm_control/scripts` there are some basic scripts for testing the various controller types implemented inside te robot hardware interface.
 To launch impedance control script:
 
-```
+```shell
 ros2 run franka_mm_control cart_impedance_test.py
 ```
