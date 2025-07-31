@@ -96,7 +96,7 @@ void ModeSwitchPlan::who_and_what_switched(
             what = ControlMode::EFFORT;
         } else if (find_interface_type(iface, interfaces::types::HW_IF_CART_POSITION)) {
             what = ControlMode::CARTESIAN_POSITION;
-        } else if (find_interface_type(iface, interfaces::types::HW_IF_POSITION)) {
+        } else if (find_interface_type(iface, interfaces::types::HW_IF_CART_VELOCITY)) {
             what = ControlMode::CARTESIAN_VELOCITY;
         } else if (find_interface_type(iface, interfaces::types::HW_IF_CART_POSITION_Q)) {
             what = ControlMode::CARTESIAN_IMPEDANCE;
