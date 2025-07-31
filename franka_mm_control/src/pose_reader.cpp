@@ -24,15 +24,19 @@ controller_interface::InterfaceConfiguration PoseReader::command_interface_confi
 }
 
 controller_interface::InterfaceConfiguration PoseReader::state_interface_configuration() const  {
+    using interfaces::names::cartesian_pose_interface_names;
     using interfaces::names::cartesian_pose_q_interface_names;
 
     std::vector<std::string> state_interface_names;
     
-    state_interface_names.reserve((16 + 7) * robot_names.size());
+    state_interface_names.reserve(
+        cartesian_pose_interface_names.size() * robot_names.size() +
+        cartesian_pose_q_interface_names.size() * robot_names.size()
+    );
     for (const auto& robot_name : robot_names) {
         for (long unsigned i = 0; i < 16; ++i) {
             state_interface_names.push_back(
-                robot_name + "_" + std::to_string(i) + "/" + interfaces::types::HW_IF_CART_POSITION
+                robot_name + "_" + cartesian_pose_interface_names[i] + "/" + interfaces::types::HW_IF_CART_POSITION
             );
         }
     }
@@ -62,7 +66,7 @@ controller_interface::return_type PoseReader::update(const rclcpp::Time&, const 
     
     msg.data = {};
     long unsigned i = 0;
-    while (i < 16 * robot_names.size()){
+    while (i < cartesian_pose_interface_names.size() * robot_names.size()){
         const auto& iface = state_interfaces_[i];
         msg.data.push_back(iface.get_value());
         ++i;

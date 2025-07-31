@@ -23,13 +23,15 @@ controller_interface::InterfaceConfiguration PositionReader::command_interface_c
 }
 
 controller_interface::InterfaceConfiguration PositionReader::state_interface_configuration() const {
+    using interfaces::names::joint_interface_names;
+
     std::vector<std::string> state_interface_names;
     
-    state_interface_names.reserve(7 * robot_names.size());
+    state_interface_names.reserve( * robot_names.size());
     for (const auto& robot_name : robot_names) {
-        for (long unsigned i = 0; i < 7; ++i) {
+        for (long unsigned i = 0; i < joint_interface_names.size(); ++i) {
             state_interface_names.push_back(
-                robot_name + "_fr3_joint" + std::to_string(i+1) + "/" + interfaces::types::HW_IF_POSITION
+                robot_name + "_" + joint_interface_names[i] + "/" + interfaces::types::HW_IF_POSITION
             );
         }
     }

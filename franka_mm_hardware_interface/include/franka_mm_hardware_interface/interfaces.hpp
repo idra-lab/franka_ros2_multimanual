@@ -22,6 +22,8 @@
 #ifndef FRANKA_MM_INTERFACES_HPP
 #define FRANKA_MM_INTERFACES_HPP
 
+#include <array>
+
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
 /**
@@ -80,6 +82,26 @@ namespace interfaces {
      * Namespace containing the names of the interfaces used to read and command the robot
      */
     namespace names {
+        /**
+         * Interface names used to export joint values of position, velocity and effort
+         */
+        constexpr const auto joint_interface_names = std::array{
+            "fr3_joint1",
+            "fr3_joint2",
+            "fr3_joint3",
+            "fr3_joint4",
+            "fr3_joint5",
+            "fr3_joint6",
+            "fr3_joint7"
+        };
+
+        /**
+         * Interface names used to export cartesian pose (expressed as column-major transformation matrix)
+         */
+        constexpr const auto cartesian_pose_interface_names = std::array{
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"
+        };
+
         /**
          * Interface names used to export cartesian pose (expressed as position + quaternion)
          */
