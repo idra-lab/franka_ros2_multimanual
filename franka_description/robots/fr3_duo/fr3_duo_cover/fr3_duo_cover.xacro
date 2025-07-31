@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+  <xacro:include filename="$(find franka_description)/robots/common/utils.xacro" />
+
+  <xacro:macro name="cover" params="name parent inertials *origin">   
+    <link name="cover_link" >
+      <visual>
+        <geometry>
+          <mesh filename="package://franka_description/meshes/robot_arms/fr3_duo/cover/visual/fr3_duo_cover.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://franka_description/meshes/robot_arms/fr3_duo/cover/collision/fr3_duo_cover.stl"/>
+        </geometry>
+      </collision>
+      <xacro:franka-inertials name="cover" />
+    </link>
+
+    <joint name="cover_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child  link="cover_link" />
+    </joint>
+  </xacro:macro>
+
+</robot>
