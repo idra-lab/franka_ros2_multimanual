@@ -50,24 +50,11 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param response franka_msgs::srv set parameter response type
    */
   template <typename request_type, typename response_type>
-  void setGenericRobotParam(const std::function<void(request_type)>& param_setter_function,
-                            const request_type& request,
-                            const response_type& response) {
-    try {
-      param_setter_function(request);
-      response->success = true;
-    } catch (const franka::CommandException& command_exception) {
-      RCLCPP_ERROR(this->get_logger(), "Command exception thrown during parameter setting %s",
-                   command_exception.what());
-      response->success = false;
-      response->error = "command exception error";
-    } catch (const franka::NetworkException& network_exception) {
-      RCLCPP_ERROR(this->get_logger(), "Network exception thrown during parameter setting %s",
-                   network_exception.what());
-      response->success = false;
-      response->error = "network exception error";
-    }
-  }
+  void setGenericRobotParam(
+    const std::function<void(request_type)>& param_setter_function,
+    const request_type& request,
+    const response_type& response
+  );
 
   /**
    * @brief Callback function for set_joint_stiffness service

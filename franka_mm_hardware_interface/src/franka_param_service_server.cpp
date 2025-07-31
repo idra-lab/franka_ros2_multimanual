@@ -72,6 +72,33 @@ FrankaParamServiceServer::FrankaParamServiceServer(const std::string& node_name,
   RCLCPP_INFO(get_logger(), "Service started");
 }
 
+template <typename request_type, typename response_type>
+void FrankaParamServiceServer::setGenericRobotParam(
+  const std::function<void(request_type)>& param_setter_function,
+  const request_type& request,
+  const response_type& response
+) {
+  try {
+    if (robot_->control_mode == ControlMode::INACTIVE) { 
+      param_setter_function(request);
+      response->success = true;
+    } else {
+      response->success = false;
+      response->error = "To use the service, robot state must be set to inactive";
+    }
+  } catch (const franka::CommandException& command_exception) {
+    RCLCPP_ERROR(this->get_logger(), "Command exception thrown during parameter setting %s",
+                  command_exception.what());
+    response->success = false;
+    response->error = "command exception error";
+  } catch (const franka::NetworkException& network_exception) {
+    RCLCPP_ERROR(this->get_logger(), "Network exception thrown during parameter setting %s",
+                  network_exception.what());
+    response->success = false;
+    response->error = "network exception error";
+  }
+}
+
 void FrankaParamServiceServer::setJointStiffnessCallback(
     const franka_msgs::srv::SetJointStiffness::Request::SharedPtr& request,
     const franka_msgs::srv::SetJointStiffness::Response::SharedPtr& response) {
