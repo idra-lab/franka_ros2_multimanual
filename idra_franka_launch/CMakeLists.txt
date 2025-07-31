@@ -12,6 +12,7 @@ install(
     scripts/gear_pick.py
     scripts/gripper_grasp_test.py
     scripts/gripper_homing_test.py
+    scripts/stiffness_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
