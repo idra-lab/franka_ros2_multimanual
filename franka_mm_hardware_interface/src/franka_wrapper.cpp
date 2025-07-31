@@ -18,7 +18,6 @@ FrankaRobotWrapper::FrankaRobotWrapper(
 
     arm = std::make_unique<franka::Robot>(ip, rt_config);
     model = std::make_unique<franka::Model>(arm->loadModel());
-    //TODO? setDefaultBehavior(frk)
     
     // Controller state
     control_mode = ControlMode::INACTIVE;
@@ -28,6 +27,9 @@ FrankaRobotWrapper::FrankaRobotWrapper(
         rclcpp::NodeOptions(),
         this
     );
+
+    // Initialize stiffness and impedance values
+    setDefaultBehaviour();
 
     RCLCPP_INFO(get_logger(), "Done!");
 }
@@ -149,6 +151,16 @@ std::string FrankaRobotWrapper::control_to_string(const ControlMode& mode) {
         default:
         return "???";
     }
+}
+
+void FrankaRobotWrapper::setDefaultBehaviour() {
+    arm->setCollisionBehavior(
+      {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0}}, {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0}},
+      {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0}}, {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0}},
+      {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0}}, {{20.0, 20.0, 20.0, 20.0, 20.0, 20.0}},
+      {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0}}, {{10.0, 10.0, 10.0, 10.0, 10.0, 10.0}});
+    arm->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
+    arm->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
 }
 
 /* --- START OF COPY --- */

@@ -331,6 +331,11 @@ class FrankaRobotWrapper {
      */
     bool is_cartesian() const;
 
+    /**
+     * Sets the default parameters for collision behaviour, cartesian impedance behaviour and joint impedance behaviour.
+     */
+    void setDefaultBehaviour();
+
     /* --- COPIED FROM FRANKA --- */
 
     /**
