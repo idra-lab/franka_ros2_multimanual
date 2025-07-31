@@ -227,13 +227,12 @@ HardwareInterface::on_error(const rclcpp_lifecycle::State& prev_state) {
 
 std::vector<hardware_interface::StateInterface>
 HardwareInterface::export_state_interfaces() {
-    using hardware_interface::HW_IF_EFFORT;
-    using hardware_interface::HW_IF_POSITION;
-    using hardware_interface::HW_IF_VELOCITY;
-
+    using interfaces::names::cartesian_pose_q_interface_names;
+    using interfaces::names::elbow_interfaces_names;
+    
     std::vector<hardware_interface::StateInterface> state_interfaces;
     std::string jnt_name = {};
-
+    
     /*
     * NOLINT: 
     * 7 joints * 3 cmd interfaces * n robots + 
@@ -253,27 +252,27 @@ HardwareInterface::export_state_interfaces() {
             jnt_name = arms[p].name + "_fr3_joint" + std::to_string(i+1);
             RCLCPP_INFO(get_logger(), "%s", jnt_name.c_str());
 
-            state_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].if_states.q[i]);
-            state_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].if_states.qd[i]);
-            state_interfaces.emplace_back(jnt_name, HW_IF_EFFORT,   &arms[p].if_states.tau[i]);
+            state_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_POSITION, &arms[p].if_states.q[i]);
+            state_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_VELOCITY, &arms[p].if_states.qd[i]);
+            state_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_EFFORT,   &arms[p].if_states.tau[i]);
         }
 
         for (long i = 0; i < 16; ++i) {
             jnt_name = arms[p].name + "_" + std::to_string(i);
 
-            state_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].if_states.x[i]);
+            state_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_CART_POSITION, &arms[p].if_states.x[i]);
         }
 
-        for (long i = 0; i < 7; ++i) {
+        for (long i = 0; i < cartesian_pose_q_interface_names.size(); ++i) {
             jnt_name = arms[p].name + "_" + cartesian_pose_q_interface_names[i];
 
-            state_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION_Q, &arms[p].if_states.qx[i]);
+            state_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_CART_POSITION_Q, &arms[p].if_states.qx[i]);
         }
 
-        for (long i = 0; i < 2; ++i) {
+        for (long i = 0; i < elbow_interfaces_names.size(); ++i) {
             jnt_name = arms[p].name + "_" + elbow_interfaces_names[i];
 
-            state_interfaces.emplace_back(jnt_name, HW_IF_ELBOW, &arms[p].if_states.elbow[i]);
+            state_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_ELBOW, &arms[p].if_states.elbow[i]);
         }
     }
 
@@ -282,9 +281,9 @@ HardwareInterface::export_state_interfaces() {
 
 std::vector<hardware_interface::CommandInterface>
 HardwareInterface::export_command_interfaces() {
-    using hardware_interface::HW_IF_EFFORT;
-    using hardware_interface::HW_IF_POSITION;
-    using hardware_interface::HW_IF_VELOCITY;
+    using interfaces::names::cartesian_velocity_interfaces_names;
+    using interfaces::names::cartesian_pose_q_interface_names;
+    using interfaces::names::elbow_interfaces_names;
 
     std::vector<hardware_interface::CommandInterface> cmd_interfaces;
     std::string jnt_name = {};
@@ -307,33 +306,33 @@ HardwareInterface::export_command_interfaces() {
         for (long i = 0; i < 7; ++i) {
             jnt_name = arms[p].name + "_fr3_joint" + std::to_string(i+1);
 
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_POSITION, &arms[p].exported_cmds.q[i]);
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_VELOCITY, &arms[p].exported_cmds.qd[i]);
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_EFFORT,   &arms[p].exported_cmds.tau[i]);
+            cmd_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_POSITION, &arms[p].exported_cmds.q[i]);
+            cmd_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_VELOCITY, &arms[p].exported_cmds.qd[i]);
+            cmd_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_EFFORT,   &arms[p].exported_cmds.tau[i]);
         }
         
-        for (long i = 0; i < 6; ++i) {
+        for (long i = 0; i < cartesian_velocity_interfaces_names.size(); ++i) {
             jnt_name = arms[p].name + "_" + cartesian_velocity_interfaces_names[i];
             
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_VELOCITY, &arms[p].exported_cmds.xd[i]);
+            cmd_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_CART_VELOCITY, &arms[p].exported_cmds.xd[i]);
         }
 
         for (long i = 0; i < 16; ++i) {
             jnt_name = arms[p].name + "_" + std::to_string(i);
 
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION, &arms[p].exported_cmds.x[i]);
+            cmd_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_CART_POSITION, &arms[p].exported_cmds.x[i]);
         }
 
-        for (long i = 0; i < 7; ++i) {
+        for (long i = 0; i < cartesian_pose_q_interface_names.size(); ++i) {
             jnt_name = arms[p].name + "_" + cartesian_pose_q_interface_names[i];
 
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_CART_POSITION_Q, &arms[p].exported_cmds.qx[i]);
+            cmd_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_CART_POSITION_Q, &arms[p].exported_cmds.qx[i]);
         }
 
-        for (long i = 0; i < 2; ++i) {
+        for (long i = 0; i < elbow_interfaces_names.size(); ++i) {
             jnt_name = arms[p].name + "_" + elbow_interfaces_names[i];
 
-            cmd_interfaces.emplace_back(jnt_name, HW_IF_ELBOW, &arms[p].exported_cmds.elbow[i]);
+            cmd_interfaces.emplace_back(jnt_name, interfaces::types::HW_IF_ELBOW, &arms[p].exported_cmds.elbow[i]);
         }
     }
 

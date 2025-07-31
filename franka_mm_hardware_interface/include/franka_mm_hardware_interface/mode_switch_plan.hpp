@@ -161,6 +161,10 @@ void who_and_what_switched(
     std::vector<long>&       elbow_changes
 );
 
+inline bool find_interface_type(const std::string& iface, const char* iface_type) {
+    return (iface.find(std::string("/") + iface_type) != std::string::npos);
+}
+
 };
 
 #endif  // MODE_SWITCH_PLAN_HPP

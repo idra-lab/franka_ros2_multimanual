@@ -1,5 +1,6 @@
 #include "franka_mm_hardware_interface/mode_switch_plan.hpp"
 #include "franka_mm_hardware_interface/franka_wrapper.hpp"
+#include "franka_mm_hardware_interface/interfaces.hpp"
 
 #include <exception>
 #include <stdexcept>
@@ -89,19 +90,19 @@ void ModeSwitchPlan::who_and_what_switched(
             throw std::runtime_error("An unknown robot tried to modifty an interface");
         }
 
-        if (iface.find("/position") != std::string::npos) {
+        if (find_interface_type(iface, interfaces::types::HW_IF_POSITION)) {
             what = ControlMode::POSITION;
-        } else if (iface.find("/velocity") != std::string::npos) {
+        } else if (find_interface_type(iface, interfaces::types::HW_IF_VELOCITY)) {
             what = ControlMode::VELOCITY;
-        } else if (iface.find("/effort") != std::string::npos) {
+        } else if (find_interface_type(iface, interfaces::types::HW_IF_EFFORT)) {
             what = ControlMode::EFFORT;
-        } else if (iface.find("/cartesian_pose_command") != std::string::npos) {
+        } else if (find_interface_type(iface, interfaces::types::HW_IF_CART_POSITION)) {
             what = ControlMode::CARTESIAN_POSITION;
-        } else if (iface.find("/cartesian_velocity") != std::string::npos) {
+        } else if (find_interface_type(iface, interfaces::types::HW_IF_POSITION)) {
             what = ControlMode::CARTESIAN_VELOCITY;
-        } else if (iface.find("/cartesian_pose") != std::string::npos) {
+        } else if (find_interface_type(iface, interfaces::types::HW_IF_CART_POSITION_Q)) {
             what = ControlMode::CARTESIAN_IMPEDANCE;
-        } else if (iface.find("/elbow_command") != std::string::npos) {
+        } else if (find_interface_type(iface, interfaces::types::HW_IF_ELBOW)) {
             is_elbow = true;
         } else {
             throw std::runtime_error(robots[who].name + " tried to modify an unsupported interface");

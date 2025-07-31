@@ -35,6 +35,7 @@
 
 #include "franka_mm_hardware_interface/franka_wrapper.hpp"
 #include "franka_mm_hardware_interface/mode_switch_plan.hpp"
+#include "franka_mm_hardware_interface/interfaces.hpp"
     
 /** 
 * This class implements the hardware interface for handling multiple 
@@ -43,43 +44,7 @@
 * @author Alessandro Moscatelli
 */
 class HardwareInterface : public hardware_interface::SystemInterface {
-public:
-
-    /**
-     * Identification name of the cartesian pose interface (expressed as position + quaternion)
-     */
-    const std::string HW_IF_CART_POSITION_Q = "cartesian_pose";
-
-    /**
-     * names of the cartesian pose (pos + quat) interfaces
-     */
-    const std::vector<std::string> cartesian_pose_q_interface_names = {"x", "y", "z", "qw", "qx", "qy", "qz"};
-
-    /**
-    * Identification name of the cartesian velocity interface
-    */
-    const std::string HW_IF_CART_POSITION = "cartesian_pose_command";
-
-    /** 
-    * Names of cartesian velocities interfaces 
-    */
-    const std::vector<std::string> cartesian_velocity_interfaces_names = {"vx", "vy", "vz", "wx", "wy", "wz"};
-
-    /**
-    * Identification name of the cartesian velocity interface
-    */
-    const std::string HW_IF_CART_VELOCITY = "cartesian_velocity";
-
-    /** 
-    * Names of elbow command interfaces 
-    */
-    const std::vector<std::string> elbow_interfaces_names = {"joint_3_position", "joint_4_sign"};
-
-    /** 
-    * Identification name of the elbow command interfaces 
-    */
-    const std::string HW_IF_ELBOW = "elbow_command";
-
+public:    
     RCLCPP_SHARED_PTR_DEFINITIONS(HardwareInterface)
 
     HardwareInterface()           = default;
