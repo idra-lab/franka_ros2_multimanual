@@ -65,10 +65,18 @@ HardwareInterface::on_init (
 
     auto name_it = name_begin;
     auto ip_it = ip_begin;
+    
+    arms.reserve(ip_size);
     for ( long i = 0; i < ip_size; ++i ) {
-        FrankaRobotWrapper frk(name_it->str(), ip_it->str());
+        arms.emplace_back(
+            FrankaRobotWrapper(name_it->str(), ip_it->str())
+        );
 
-        arms.push_back(std::move(frk));
+        arms[i].param_server = std::make_shared<FrankaParamServiceServer>(
+            arms[i].name + "_service_server",
+            rclcpp::NodeOptions(),
+            &(arms[i])
+        );
 
         ++name_it;
         ++ip_it;

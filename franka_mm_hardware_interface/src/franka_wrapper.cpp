@@ -22,12 +22,6 @@ FrankaRobotWrapper::FrankaRobotWrapper(
     // Controller state
     control_mode = ControlMode::INACTIVE;
 
-    param_server = std::make_shared<FrankaParamServiceServer>(
-        name + "_service_server",
-        rclcpp::NodeOptions(),
-        this
-    );
-
     // Initialize stiffness and impedance values
     setDefaultBehaviour();
 
