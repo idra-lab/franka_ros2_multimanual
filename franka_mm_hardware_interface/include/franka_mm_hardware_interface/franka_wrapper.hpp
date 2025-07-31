@@ -277,7 +277,7 @@ class FrankaRobotWrapper {
     RCLCPP_SHARED_PTR_DEFINITIONS(FrankaRobotWrapper);
 
     /**
-     * Creates a wrapper the wrapper and establishes a connection
+     * Creates the wrapper and establishes a connection
      * 
      * @param name      Name of the robot
      * @param ip        IP of the robot

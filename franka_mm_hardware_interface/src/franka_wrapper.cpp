@@ -22,6 +22,8 @@ FrankaRobotWrapper::FrankaRobotWrapper(
     // Controller state
     control_mode = ControlMode::INACTIVE;
 
+    // PARAMETER SERVER MUST BE INITIALIZED OUTSIDE TO AVOID POINTER PROBLEMS.
+
     // Initialize stiffness and impedance values
     setDefaultBehaviour();
 
