@@ -10,6 +10,7 @@ find_package(std_msgs REQUIRED)
 find_package(controller_interface REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(franka_mm_hardware_interface REQUIRED)
 
 include_directories(
   include
@@ -25,6 +26,7 @@ target_include_directories(
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${franka_mm_hardware_interface_INCLUDE_DIRS}
 )
 
 ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs controller_interface hardware_interface pluginlib)

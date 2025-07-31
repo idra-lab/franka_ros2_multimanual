@@ -13,6 +13,8 @@
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
 
+  <depend>franka_mm_hardware_interface</depend>
+
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>

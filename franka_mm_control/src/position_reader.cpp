@@ -5,6 +5,8 @@
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
 #include <controller_interface/controller_interface.hpp>
 
+#include "franka_mm_hardware_interface/interfaces.hpp"
+
 controller_interface::CallbackReturn PositionReader::on_init() {
     auto_declare<std::vector<std::string>>("robot_names", std::vector<std::string>()); 
 
@@ -20,13 +22,15 @@ controller_interface::InterfaceConfiguration PositionReader::command_interface_c
     };
 }
 
-controller_interface::InterfaceConfiguration PositionReader::state_interface_configuration() const  {
+controller_interface::InterfaceConfiguration PositionReader::state_interface_configuration() const {
     std::vector<std::string> state_interface_names;
     
     state_interface_names.reserve(7 * robot_names.size());
     for (const auto& robot_name : robot_names) {
-        for (long i = 0; i < 7; ++i) {
-            state_interface_names.push_back(robot_name + "_fr3_joint" + std::to_string(i+1) + "/" + hardware_interface::HW_IF_POSITION);
+        for (long unsigned i = 0; i < 7; ++i) {
+            state_interface_names.push_back(
+                robot_name + "_fr3_joint" + std::to_string(i+1) + "/" + interfaces::types::HW_IF_POSITION
+            );
         }
     }
 

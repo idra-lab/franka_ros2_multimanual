@@ -20,7 +20,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
-#include <hardware_interface/types/hardware_interface_type_values.hpp>
 #include <controller_interface/controller_interface.hpp>
 
 /**
