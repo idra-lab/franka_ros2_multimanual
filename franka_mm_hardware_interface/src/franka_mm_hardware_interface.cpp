@@ -374,8 +374,6 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
     const std::vector<std::string>& start_interfaces,
     const std::vector<std::string>& stop_interfaces
 ) {
-    using ControlMode = FrankaRobotWrapper::ControlMode;
-
     try {
         mode_switch_plan = std::make_unique<ModeSwitchPlan>(start_interfaces, stop_interfaces, arms);
     } catch (std::runtime_error& e) {
@@ -389,7 +387,7 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
         // Check: Are there any activations on robot that are not planned to be deactivated?
         if (arm.control_mode != ControlMode::INACTIVE && !mode_switch_plan->is_being_deactivated(change.first)) {
             RCLCPP_ERROR(get_logger(), "%s already has an active interface %s, that is not planned to be deactivated",
-                arm.name.c_str(), FrankaRobotWrapper::control_to_string(arm.control_mode).c_str()
+                arm.name.c_str(), control_mode_utils::to_string(arm.control_mode).c_str()
             );
 
             return hardware_interface::return_type::ERROR;
@@ -401,7 +399,7 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
             ( (change.second != ControlMode::CARTESIAN_POSITION && change.second != ControlMode::CARTESIAN_VELOCITY) && arm.elbow_control && !mode_switch_plan->is_elbow_being_deactivated(change.first) )
         ) {
             RCLCPP_ERROR(get_logger(), "%s is trying to activate an elbow interface on an erratic controller: %s (to be activated)",
-                arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()
+                arm.name.c_str(), control_mode_utils::to_string(change.second).c_str()
             );
 
             return hardware_interface::return_type::ERROR;
@@ -417,7 +415,7 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
             !mode_switch_plan->is_being_activated(change) && mode_switch_plan->is_elbow_being_activated(change) 
         ) {
             RCLCPP_ERROR(get_logger(), "%s is trying to activate an elbow interface on an erratic controller: %s (currently active)",
-                arm.name.c_str(), FrankaRobotWrapper::control_to_string(arm.control_mode).c_str()
+                arm.name.c_str(), control_mode_utils::to_string(arm.control_mode).c_str()
             );
 
             return hardware_interface::return_type::ERROR;
@@ -432,8 +430,6 @@ HardwareInterface::perform_command_mode_switch(
         const std::vector<std::string>& start_interfaces,
         const std::vector<std::string>& stop_interfaces
 ) {
-    using ControlMode = FrankaRobotWrapper::ControlMode;
-
     // Deactivations
     for (const auto& change : mode_switch_plan->elbow_deactivations) {
         FrankaRobotWrapper& arm = arms[change];
@@ -453,7 +449,7 @@ HardwareInterface::perform_command_mode_switch(
         FrankaRobotWrapper& arm = arms[change.first];
 
         RCLCPP_INFO(get_logger(), "%s will shut down interface %s", 
-            arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()
+            arm.name.c_str(), control_mode_utils::to_string(change.second).c_str()
         );
 
         arm.reset_controller();
@@ -483,7 +479,7 @@ HardwareInterface::perform_command_mode_switch(
         FrankaRobotWrapper& arm = arms[change.first];
 
         RCLCPP_INFO(get_logger(), "%s will activate %s interface", 
-            arm.name.c_str(), FrankaRobotWrapper::control_to_string(change.second).c_str()
+            arm.name.c_str(), control_mode_utils::to_string(change.second).c_str()
         );
 
         if (change.second == ControlMode::POSITION) {

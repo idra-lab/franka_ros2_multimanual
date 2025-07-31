@@ -27,15 +27,15 @@ bool ModeSwitchPlan::is_activating_cartesian(long robot_index) const {
         [&](const auto& item) { 
             return 
                 item.first == robot_index && (
-                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_POSITION  || 
-                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_VELOCITY  ||
-                    item.second == FrankaRobotWrapper::ControlMode::CARTESIAN_IMPEDANCE
+                    item.second == ControlMode::CARTESIAN_POSITION  || 
+                    item.second == ControlMode::CARTESIAN_VELOCITY  ||
+                    item.second == ControlMode::CARTESIAN_IMPEDANCE
                 ); 
         }
     );
 }
 
-FrankaRobotWrapper::ControlMode ModeSwitchPlan::what_is_being_activated(long robot_index) const {
+ControlMode ModeSwitchPlan::what_is_being_activated(long robot_index) const {
     for (const ModeSwitch& change : activations) {
         if(change.first == robot_index){
             return change.second;
@@ -72,8 +72,6 @@ void ModeSwitchPlan::who_and_what_switched(
     std::vector<ModeSwitch>&               changes,
     std::vector<long>&                     elbow_changes
 ) {
-    using ControlMode = FrankaRobotWrapper::ControlMode;
-
     for (const std::string& iface : interfaces) {
         long who = -1;
         bool is_elbow = false;
@@ -116,8 +114,8 @@ void ModeSwitchPlan::who_and_what_switched(
                     if (change.second != what) {
                         throw std::runtime_error(
                             robots[who].name + " tried to modify " + 
-                            FrankaRobotWrapper::control_to_string(what) + " interface, but it has modified " + 
-                            FrankaRobotWrapper::control_to_string(change.second)
+                            control_mode_utils::to_string(what) + " interface, but it has modified " + 
+                            control_mode_utils::to_string(change.second)
                         ); 
                     }
                 }

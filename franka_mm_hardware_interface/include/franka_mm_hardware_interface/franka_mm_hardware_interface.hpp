@@ -36,6 +36,7 @@
 #include "franka_mm_hardware_interface/franka_wrapper.hpp"
 #include "franka_mm_hardware_interface/mode_switch_plan.hpp"
 #include "franka_mm_hardware_interface/interfaces.hpp"
+#include "franka_mm_hardware_interface/control_modes.hpp"
     
 /** 
 * This class implements the hardware interface for handling multiple 

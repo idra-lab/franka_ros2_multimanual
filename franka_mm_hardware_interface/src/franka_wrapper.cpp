@@ -1,5 +1,6 @@
 #include "franka_mm_hardware_interface/franka_wrapper.hpp"
 #include "franka_mm_hardware_interface/lambda_control.hpp"
+#include "franka_mm_hardware_interface/control_modes.hpp"
 
 #include "franka/active_control_base.h"
 
@@ -126,27 +127,6 @@ bool FrankaRobotWrapper::is_cartesian() const {
     return control_mode == ControlMode::CARTESIAN_POSITION ||
            control_mode == ControlMode::CARTESIAN_VELOCITY ||
            control_mode == ControlMode::CARTESIAN_IMPEDANCE;
-}
-
-std::string FrankaRobotWrapper::control_to_string(const ControlMode& mode) {
-    switch(mode) { 
-        case ControlMode::INACTIVE:
-        return "inactive";
-        case ControlMode::POSITION:
-        return "position";
-        case ControlMode::VELOCITY:
-        return "velocity";
-        case ControlMode::EFFORT:
-        return "effort";
-        case ControlMode::CARTESIAN_POSITION:
-        return "cartesian position";
-        case ControlMode::CARTESIAN_VELOCITY:
-        return "cartesian velocity";
-        case ControlMode::CARTESIAN_IMPEDANCE:
-        return "cartesian impedance";
-        default:
-        return "???";
-    }
 }
 
 void FrankaRobotWrapper::setDefaultBehaviour() {

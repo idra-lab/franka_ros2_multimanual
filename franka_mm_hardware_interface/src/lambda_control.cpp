@@ -1,5 +1,6 @@
 #include "franka_mm_hardware_interface/lambda_control.hpp"
 #include "franka_mm_hardware_interface/franka_wrapper.hpp"
+#include "franka_mm_hardware_interface/control_modes.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -47,7 +48,7 @@ std::function<void()> LambdaControl::startJointPositionControl(FrankaRobotWrappe
                         robot.current_state.q_d, robot.current_state.dq_d, robot.current_state.ddq_d);
                 }
 
-                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+                out.motion_finished = (robot.control_mode == ControlMode::INACTIVE);
 
                 return out;
             }
@@ -77,7 +78,7 @@ std::function<void()> LambdaControl::startJointVelocityControl(FrankaRobotWrappe
                         out.dq, robot.current_state.dq_d, robot.current_state.ddq_d);
                 }
 
-                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+                out.motion_finished = (robot.control_mode == ControlMode::INACTIVE);
 
                 return out;
             }
@@ -114,7 +115,7 @@ std::function<void()> LambdaControl::startJointEffortControl(FrankaRobotWrapper&
                         franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
                 }
 
-                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+                out.motion_finished = (robot.control_mode == ControlMode::INACTIVE);
 
                 return out;
             }
@@ -165,7 +166,7 @@ std::function<void()> LambdaControl::startCartesianPositionControl(FrankaRobotWr
                         robot.current_state.O_dP_EE_c, robot.current_state.O_ddP_EE_c);
                 }
 
-                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+                out.motion_finished = (robot.control_mode == ControlMode::INACTIVE);
 
                 return out;
             }
@@ -208,7 +209,7 @@ std::function<void()> LambdaControl::startCartesianVelocityControl(FrankaRobotWr
                         robot.current_state.O_dP_EE_c, robot.current_state.O_ddP_EE_c);
                 }
 
-                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+                out.motion_finished = (robot.control_mode == ControlMode::INACTIVE);
 
                 return out;
             }
@@ -297,7 +298,7 @@ std::function<void()> LambdaControl::startCartesianImpedanceControl(FrankaRobotW
                     out.tau_J = franka::limitRate(franka::kMaxTorqueRate, out.tau_J, robot.current_state.tau_J_d);
                 }
                 
-                out.motion_finished = (robot.control_mode == FrankaRobotWrapper::ControlMode::INACTIVE);
+                out.motion_finished = (robot.control_mode == ControlMode::INACTIVE);
 
                 return out;
             }

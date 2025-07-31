@@ -19,6 +19,7 @@
 #define MODE_SWITCH_PLAN_HPP
 
 #include "franka_mm_hardware_interface/franka_wrapper.hpp"
+#include "franka_mm_hardware_interface/control_modes.hpp"
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -46,7 +47,7 @@ public:
  * Pair representing the index of the robot that will modify 
  * it's interface type and the type of interface that is needed.
  */
-using ModeSwitch = std::pair<long, FrankaRobotWrapper::ControlMode>;
+using ModeSwitch = std::pair<long, ControlMode>;
 
 /**
  * Vector describing which interfaces will be activated.
@@ -113,7 +114,7 @@ bool is_activating_cartesian(long robot_index) const;
  * 
  * @throws range_error if the robot with relative index is not found
  */
-FrankaRobotWrapper::ControlMode what_is_being_activated(long robot_index) const;
+ControlMode what_is_being_activated(long robot_index) const;
 
 /**
  * Tells if the robot will deactivate an interface.

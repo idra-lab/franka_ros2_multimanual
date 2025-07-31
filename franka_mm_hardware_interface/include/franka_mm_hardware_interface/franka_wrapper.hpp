@@ -40,6 +40,7 @@
 #include <franka_msgs/srv/set_tcp_frame.hpp>
 
 #include "franka_mm_hardware_interface/franka_param_service_server.hpp"
+#include "franka_mm_hardware_interface/control_modes.hpp"
 
 /**
  * Class used to handle the connection and the control managment of a franka::Robot object.
@@ -79,19 +80,6 @@ class FrankaRobotWrapper {
      */
     using ElbowArr   = std::array<double, 2>; 
     
-    /**
-     * Enumeration class used to describe controller's possible states.
-     */
-    enum class ControlMode {
-        INACTIVE,
-        POSITION,
-        VELOCITY,
-        EFFORT,
-        CARTESIAN_POSITION,
-        CARTESIAN_VELOCITY,
-        CARTESIAN_IMPEDANCE
-    };
-
     /**
      * Struct used to populate state values that will be uploaded in the robot's state broadcaster.
      */
@@ -452,15 +440,6 @@ class FrankaRobotWrapper {
     * @return Logger
     */
     rclcpp::Logger& get_logger() { return logger; }
-
-    /**
-    * Converts a ControlMode into a string
-    *
-    * @param mode Mode to be converted
-    *  
-    * @return String representing the control mode
-    */
-    static std::string control_to_string(const ControlMode& mode);
     
     private:
     /**
