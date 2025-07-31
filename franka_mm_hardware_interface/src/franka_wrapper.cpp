@@ -124,9 +124,7 @@ void FrankaRobotWrapper::reset_controller() {
 }
 
 bool FrankaRobotWrapper::is_cartesian() const {
-    return control_mode == ControlMode::CARTESIAN_POSITION ||
-           control_mode == ControlMode::CARTESIAN_VELOCITY ||
-           control_mode == ControlMode::CARTESIAN_IMPEDANCE;
+    return control_mode_utils::is_cartesian(control_mode);
 }
 
 void FrankaRobotWrapper::setDefaultBehaviour() {

@@ -47,7 +47,7 @@ namespace control_mode_utils {
      * @param mode Mode to be converted
      * @return String representing the control mode
      */
-    inline std::string to_string(ControlMode mode) {
+    inline std::string to_string(const ControlMode& mode) {
         switch(mode) { 
             case ControlMode::INACTIVE:             return "inactive";
             case ControlMode::POSITION:             return "position";
@@ -79,6 +79,20 @@ namespace control_mode_utils {
         if (mode_name == "cartesian impedance")  return ControlMode::CARTESIAN_IMPEDANCE;
 
         throw std::invalid_argument("Unknown control mode: " + mode_name);
+    }
+
+    /**
+     * Returns a boolean that tells if the mode is 
+     * cartesian pose, velocity or impedance.
+     *
+     * @param mode Mode to be checked
+     * 
+     * @returns True if the mode is cartesian, False otherwise. 
+     */
+    inline bool is_cartesian(const ControlMode& mode) {
+        return mode == ControlMode::CARTESIAN_POSITION ||
+               mode == ControlMode::CARTESIAN_VELOCITY ||
+               mode == ControlMode::CARTESIAN_IMPEDANCE;
     }
 }
 

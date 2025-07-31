@@ -401,8 +401,8 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
 
         // Check: Are there any elbow interfaces that will be active on erratic interface types?
         if (
-            ( (change.second != ControlMode::CARTESIAN_POSITION && change.second != ControlMode::CARTESIAN_VELOCITY) && mode_switch_plan->is_elbow_being_activated(change.first) ) ||
-            ( (change.second != ControlMode::CARTESIAN_POSITION && change.second != ControlMode::CARTESIAN_VELOCITY) && arm.elbow_control && !mode_switch_plan->is_elbow_being_deactivated(change.first) )
+            ( (!control_mode_utils::is_cartesian(change.second)) && mode_switch_plan->is_elbow_being_activated(change.first) ) ||
+            ( (!control_mode_utils::is_cartesian(change.second)) && arm.elbow_control && !mode_switch_plan->is_elbow_being_deactivated(change.first) )
         ) {
             RCLCPP_ERROR(get_logger(), "%s is trying to activate an elbow interface on an erratic controller: %s (to be activated)",
                 arm.name.c_str(), control_mode_utils::to_string(change.second).c_str()
@@ -417,7 +417,7 @@ hardware_interface::return_type HardwareInterface::prepare_command_mode_switch(
 
         // Check: Are there any elbow interfaces that will be activated on erratic interface types on unchanged robots?
         if (
-            (arm.control_mode != ControlMode::CARTESIAN_POSITION && arm.control_mode != ControlMode::CARTESIAN_VELOCITY) && 
+            (!control_mode_utils::is_cartesian(arm.control_mode)) && 
             !mode_switch_plan->is_being_activated(change) && mode_switch_plan->is_elbow_being_activated(change) 
         ) {
             RCLCPP_ERROR(get_logger(), "%s is trying to activate an elbow interface on an erratic controller: %s (currently active)",

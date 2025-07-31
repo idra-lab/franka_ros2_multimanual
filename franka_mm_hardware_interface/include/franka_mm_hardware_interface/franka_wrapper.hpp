@@ -312,7 +312,7 @@ class FrankaRobotWrapper {
     void reset_controller();  
 
     /**
-     * Returns a boolen that tells if the controller is commanded in 
+     * Returns a boolean that tells if the controller is commanded in 
      * cartesian pose, velocity or impedance.
      * 
      * @returns True if the controller is commandend in cartesian mode, False otherwise. 
