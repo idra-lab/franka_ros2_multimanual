@@ -7,9 +7,7 @@ To show the capabilities of a bimanual approach of the robots, two examples are 
 
 The first one shows the two robots in a disassembly task of electronic components.
 
-<p align="center">
-  <img src="webdocs/images/Bimanual-NIST.mp4" width="620" alt="NIST Overview" />
-</p>
+![](webdocs/images/Bimanual-NIST.mp4)
 
 The second example show how a robot can be programmed to move a tray with both arms in synchrony.
 
