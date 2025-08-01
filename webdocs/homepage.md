@@ -27,10 +27,14 @@ The second example show how a robot can be programmed to move a tray with both a
 
 - Having ROS2 humble set up and working on a Ubuntu Real-Time kernel.
 - Having at least two FR3 robots with FCI activated.
+- Having libfranka 0.15.0 installed.
 
 ## Installation
 
-This package depends on [franka_ros2](https://github.com/frankarobotics/franka_ros2) package that must be installed in the system or in the same workspace of this package.
+This package depends on two Franka packages, that must be installed in the system or in the same workspace of this package.
+
+  - [franka_ros2](https://github.com/frankarobotics/franka_ros2) package, version v2.0.1.
+  - [franka_description] package, version 1.0.2 (commit 4b8948e)
 
 To compile the package:
 
