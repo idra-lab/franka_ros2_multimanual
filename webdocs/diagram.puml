@@ -1,0 +1,128 @@
+@startuml
+
+skinparam componentStyle rectangle
+skinparam dpi 120
+skinparam shadowing false
+
+!define CMD_COLOR    #1E90FF
+!define STATE_COLOR  #2ECC71
+!define HW_COLOR     #F39C12
+!define TOPIC_COLOR  #9B59B6
+!define CTRL_COLOR   #E74C3C
+!define READER_COLOR #95A5A6
+
+title Franka MultiManual Hardware & Control Interface
+
+[ROS2 Control] as rc
+[ROS2 Control Manager] as rcm 
+
+rc <-- rcm
+
+package "Franka MultiManual Hardware Interface" {
+  component hw_if HW_COLOR [
+    Hardware Interface
+  ] 
+  
+  component serv_serv [
+    Service Server
+  ]
+  
+  hw_if -left-> serv_serv
+  
+  interface "/franka<number>/<service_name>"as services TOPIC_COLOR
+  serv_serv -left-> services: exports
+  
+  component "State Outputs" {
+    interface "State Interfaces" as si   STATE_COLOR
+    hw_if --> si
+    
+    interface "q" as si_q   STATE_COLOR
+    interface "qd"   as si_qd  STATE_COLOR
+    interface "tau"  as si_tau STATE_COLOR
+    interface "x"    as si_x   STATE_COLOR
+    interface "qx"   as si_qx  STATE_COLOR
+
+    si -down-> si_q
+    si -down-> si_qd
+    si -down-> si_tau
+    si -down-> si_x
+    si -down-> si_qx
+  }
+
+  component "Command Inputs" {
+    interface "Command Interfaces" as ci CMD_COLOR
+    hw_if --> ci
+    
+    interface "q"    as ci_q   CMD_COLOR
+    interface "qd"   as ci_qd  CMD_COLOR
+    interface "tau"  as ci_tau CMD_COLOR
+    interface "x"    as ci_x   CMD_COLOR
+    interface "qx"   as ci_qx  CMD_COLOR
+    interface "xd"   as ci_xd  CMD_COLOR
+
+    ci -down-> ci_q
+    ci -down-> ci_qd
+    ci -down-> ci_tau
+    ci -down-> ci_x
+    ci -down-> ci_qx
+    ci -down-> ci_xd
+  }
+}
+
+hw_if -right-> rc : used by 
+
+package "Franka MultiManual Control" {
+
+  rectangle "State Readers" {
+    [PoseReader] as pr READER_COLOR
+    [PositionReader] as posr READER_COLOR
+  }
+ 
+  interface "/current_pose"     as topic_pose TOPIC_COLOR
+  interface "/current_q_pose"   as topic_q_pose TOPIC_COLOR
+  interface "/current_position" as topic_position TOPIC_COLOR
+
+  si_x  --> pr : reads
+  si_qx --> pr : reads
+  si_q  --> posr : reads
+
+  pr   --> topic_pose : publishes
+  pr   --> topic_q_pose : publishes
+  posr --> topic_position : publishes
+
+  component "Basic Controllers" {
+    component ctrl_p CTRL_COLOR [
+      Joint Position 
+      (left + right)
+    ]
+    component ctrl_v CTRL_COLOR [
+      Joint Velocity 
+      (left + right)
+    ]
+    component ctrl_e CTRL_COLOR [
+      Joint Effort 
+      (left + right)
+    ]
+    component ctrl_cp CTRL_COLOR [
+      Cartesian Pose 
+      (left + right)
+    ]
+    component ctrl_cv CTRL_COLOR [
+      Cartesian Velocity 
+      (left + right)
+    ]
+    component ctrl_cim CTRL_COLOR [
+      Cartesian Impedance 
+      (left + right)
+    ]
+  }
+
+  ctrl_p    -> ci_q   : writes
+  ctrl_v    -> ci_qd  : writes
+  ctrl_e    -> ci_tau : writes
+  ctrl_cp   -> ci_x   : writes
+  ctrl_cv   -up-> ci_xd  : writes
+  ctrl_cim  -up-> ci_qx  : writes
+}
+
+@enduml
