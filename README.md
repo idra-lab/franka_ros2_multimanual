@@ -2,6 +2,21 @@
 
 This repository serves as implementation of a bimanual manipulator approach using two Franka Research 3 robots, also creating a custom hardware interface for a better precision control of the robots.
 
+## Video examples
+To show the capabilities of a bimanual approach of the robots, two examples are proposed.
+
+The first one shows the two robots in a disassembly task of electronic components.
+
+<p align="center">
+  <img src="webdocs/images/Bimanual-NIST.mp4" width="620" alt="NIST Overview" />
+</p>
+
+The second example show how a robot can be programmed to move a tray with both arms in synchrony.
+
+<p align="center">
+  <img src="webdocs/images/Pad-bimanual.mp4" width="620" alt="Tray Overview" />
+</p>
+
 ## Requirements
 
 - Having ROS2 humble set up and working on a Ubuntu Real-Time kernel.
