@@ -14,7 +14,10 @@ The first one shows the two robots in a disassembly task of electronic component
 The second example show how a robot can be programmed to move a tray with both arms in synchrony.
 
 <p align="center">
-  <img src="webdocs/images/Pad-bimanual.mp4" width="620" alt="Tray Overview" />
+    <video width="620"autoplay muted>
+        <source src="webdocs/images/Bimanual-NIST.mp4" type="video/mp4" alt="Tray overview">
+    Video tag not supported
+    </video>
 </p>
 
 ## Requirements
