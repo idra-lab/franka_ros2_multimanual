@@ -1,0 +1,256 @@
+controller_manager:
+  ros__parameters:
+    thread_priority: 98
+    update_rate: 1000  # Hz
+
+    position_reader:
+      type: franka_mm_control/PositionReader
+
+    pose_reader:
+      type: franka_mm_control/PoseReader 
+  
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+      
+    joint_position_left:
+      type: position_controllers/JointGroupPositionController
+
+    joint_position_right:
+      type: position_controllers/JointGroupPositionController
+
+    joint_velocity_all:
+      type: velocity_controllers/JointGroupVelocityController
+
+    joint_velocity_left:
+      type: velocity_controllers/JointGroupVelocityController
+
+    joint_velocity_right:
+      type: velocity_controllers/JointGroupVelocityController
+
+    joint_effort_left:
+      type: effort_controllers/JointGroupEffortController
+      
+    joint_effort_right:
+      type: effort_controllers/JointGroupEffortController
+
+    cartesian_pose_left:
+      type: forward_command_controller/ForwardCommandController
+
+    cartesian_pose_right:
+      type: forward_command_controller/ForwardCommandController
+
+    cartesian_impedance_left:
+      type: forward_command_controller/ForwardCommandController
+
+    cartesian_impedance_right:
+      type: forward_command_controller/ForwardCommandController
+
+    cartesian_velocity_left:
+      type: forward_command_controller/ForwardCommandController
+
+    cartesian_velocity_right:
+      type: forward_command_controller/ForwardCommandController
+
+    elbow_left:
+      type: forward_command_controller/ForwardCommandController
+
+    elbow_right:
+      type: forward_command_controller/ForwardCommandController
+
+position_reader:
+  ros__parameters:
+    robot_names:
+      - franka1
+      - franka2
+
+pose_reader:
+  ros__parameters:
+    robot_names:
+      - franka1
+      - franka2
+
+joint_position_left:
+  ros__parameters:
+    joints:
+      - franka2_fr3_joint1
+      - franka2_fr3_joint2
+      - franka2_fr3_joint3
+      - franka2_fr3_joint4
+      - franka2_fr3_joint5
+      - franka2_fr3_joint6
+      - franka2_fr3_joint7
+
+joint_position_right:
+  ros__parameters:
+    joints:
+      - franka1_fr3_joint1
+      - franka1_fr3_joint2
+      - franka1_fr3_joint3
+      - franka1_fr3_joint4
+      - franka1_fr3_joint5
+      - franka1_fr3_joint6
+      - franka1_fr3_joint7
+
+joint_velocity_all:
+  ros__parameters:
+    joints:
+      - franka1_fr3_joint1
+      - franka1_fr3_joint2
+      - franka1_fr3_joint3
+      - franka1_fr3_joint4
+      - franka1_fr3_joint5
+      - franka1_fr3_joint6
+      - franka1_fr3_joint7
+      - franka2_fr3_joint1
+      - franka2_fr3_joint2
+      - franka2_fr3_joint3
+      - franka2_fr3_joint4
+      - franka2_fr3_joint5
+      - franka2_fr3_joint6
+      - franka2_fr3_joint7
+
+joint_velocity_left:
+  ros__parameters:
+    joints:
+      - franka2_fr3_joint1
+      - franka2_fr3_joint2
+      - franka2_fr3_joint3
+      - franka2_fr3_joint4
+      - franka2_fr3_joint5
+      - franka2_fr3_joint6
+      - franka2_fr3_joint7
+
+joint_velocity_right:
+  ros__parameters:
+    joints:
+      - franka1_fr3_joint1
+      - franka1_fr3_joint2
+      - franka1_fr3_joint3
+      - franka1_fr3_joint4
+      - franka1_fr3_joint5
+      - franka1_fr3_joint6
+      - franka1_fr3_joint7
+
+joint_effort_left:
+  ros__parameters:
+    joints:
+      - franka2_fr3_joint1
+      - franka2_fr3_joint2
+      - franka2_fr3_joint3
+      - franka2_fr3_joint4
+      - franka2_fr3_joint5
+      - franka2_fr3_joint6
+      - franka2_fr3_joint7
+
+joint_effort_right:
+  ros__parameters:
+    joints:
+      - franka1_fr3_joint1
+      - franka1_fr3_joint2
+      - franka1_fr3_joint3
+      - franka1_fr3_joint4
+      - franka1_fr3_joint5
+      - franka1_fr3_joint6
+      - franka1_fr3_joint7
+
+cartesian_impedance_left:
+  ros__parameters:
+    joints:
+      - franka2_x
+      - franka2_y
+      - franka2_z
+      - franka2_qw
+      - franka2_qx
+      - franka2_qy
+      - franka2_qz
+    interface_name: cartesian_pose
+
+cartesian_impedance_right:
+  ros__parameters:
+    joints:
+      - franka1_x
+      - franka1_y
+      - franka1_z
+      - franka1_qw
+      - franka1_qx
+      - franka1_qy
+      - franka1_qz
+    interface_name: cartesian_pose
+
+cartesian_pose_left:
+  ros__parameters:
+    joints:
+      - franka2_0
+      - franka2_1
+      - franka2_2
+      - franka2_3
+      - franka2_4
+      - franka2_5
+      - franka2_6
+      - franka2_7
+      - franka2_8
+      - franka2_9
+      - franka2_10
+      - franka2_11
+      - franka2_12
+      - franka2_13
+      - franka2_14
+      - franka2_15   
+    interface_name: cartesian_pose_command
+
+cartesian_pose_right:
+  ros__parameters:
+    joints:
+      - franka1_0
+      - franka1_1
+      - franka1_2
+      - franka1_3
+      - franka1_4
+      - franka1_5
+      - franka1_6
+      - franka1_7
+      - franka1_8
+      - franka1_9
+      - franka1_10
+      - franka1_11
+      - franka1_12
+      - franka1_13
+      - franka1_14
+      - franka1_15   
+    interface_name: cartesian_pose_command
+
+cartesian_velocity_left:
+  ros__parameters:
+    joints:
+      - franka2_vx
+      - franka2_vy
+      - franka2_vz
+      - franka2_wx
+      - franka2_wy
+      - franka2_wz
+    interface_name: cartesian_velocity
+
+cartesian_velocity_right:
+  ros__parameters:
+    joints:
+      - franka1_vx
+      - franka1_vy
+      - franka1_vz
+      - franka1_wx
+      - franka1_wy
+      - franka1_wz
+    interface_name: cartesian_velocity
+
+elbow_left:
+  ros__parameters:
+    joints:
+      - franka2_joint_3_position
+      - franka2_joint_4_sign
+    interface_name: elbow_command
+
+elbow_right:
+  ros__parameters:
+    joints:
+      - franka1_joint_3_position
+      - franka1_joint_4_sign
+    interface_name: elbow_command

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Idra Franka Launch</title>
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css" />
+
+  <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
+</head>
+<body>
+  <div class="container">
+    <nav>
+        <h3>Navigation</h3>
+        <ul>
+            <div class="nav-highlighter"></div>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#report">Report</a></li>
+            <li><a href="#doxygen">Documentation</a></li>
+            <li><a href="#examples">Video Examples</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        <div id="examples" class="text-container page-content">
+          <h2>Bimanual Robot Demonstrations</h2>
+          <p>To demonstrate the capabilities of a bimanual robotic approach, two examples are provided below:</p>
+
+          <div class="video-section">
+            <div class="video-card">
+              <h3>Example 1: Disassembly of Electronic Components</h3>
+              <video controls autoplay muted>
+                <source src="images/Bimanual-NIST.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
+            <div class="video-card">
+              <h3>Example 2: Synchronized Tray Movement</h3>
+              <video controls autoplay muted>
+                <source src="images/Pad-bimanual.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+        </div>   
+        <div id="report" class="pdf-container page-content">
+            <embed src="report.pdf" type="application/pdf" />
+        </div>
+        <div id="doxygen" class="doxygen-container page-content">
+            <iframe src="docs/html/index.html"></iframe>
+        </div>
+        <div id="home" class="text-container page-content">
+            <zero-md src="https://raw.githubusercontent.com/idra-lab/idra-franka-launch/refs/heads/main/webdocs/homepage.md"></zero-md>
+        </div>        
+    </div>
+  </div>
+
+  <script src="static/js/main.js"></script>
+</body>
+</html>

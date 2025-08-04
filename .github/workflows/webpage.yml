@@ -1,0 +1,73 @@
+name: Web Page Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Installs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git wget doxygen 
+          
+      - name: LaTeX installs 
+        run: |
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-luatex \
+            latexmk
+
+      - name: Build docs
+        run: |
+          cd webdocs
+          doxygen doxyfile
+        
+      - name: Build report
+        run: |
+          cd webdocs
+          latexmk -pdf report.tex
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3.0.1
+        with:
+          path: webdocs
+          retention-days: 90
+
+  deploy:
+    needs: build
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 
