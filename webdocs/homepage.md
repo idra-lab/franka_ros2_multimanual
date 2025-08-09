@@ -1,4 +1,4 @@
-# IDRA Franka Launch
+# Franka ROS2 MultiManual
 
 This repository serves as implementation of a bimanual manipulator approach using two Franka Research 3 robots, also creating a custom hardware interface for a better precision control of the robots.
 
