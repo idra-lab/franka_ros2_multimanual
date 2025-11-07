@@ -21,6 +21,7 @@ from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
     OpaqueFunction,
+    ExecuteProcess,
     Shutdown
 )
 from launch.conditions import IfCondition, UnlessCondition
@@ -52,6 +53,7 @@ def robot_description_dependent_nodes_spawner(
 
     franka_xacro_filepath = os.path.join(get_package_share_directory(
         'franka_description'), 'robots', arm_id_str, arm_id_str+'.urdf.xacro')
+    print(f"Processing xacro file at: {franka_xacro_filepath}")
     robot_description = xacro.process_file(franka_xacro_filepath,
                                            mappings={
                                                'ros2_control': 'true',
@@ -85,8 +87,12 @@ def robot_description_dependent_nodes_spawner(
                         ],
             remappings=[
                 ('joint_states', 'franka/joint_states'),
-                ('motion_control_handle/target_frame', 'cartesian_impedance_controller/target_frame'),
-                # ('joint_states', 'franka/joint_states'),
+                ("motion_control_handle/target_frame", "target_frame"),
+                ("cartesian_impedance_controller/target_frame", "target_frame"),
+                ("cartesian_impedance_controller/target_wrench", "target_wrench"),
+                ("end_effector_controller/ft_sensor_wrench", "bus0/ft_sensor0/ft_sensor_readings/wrench"),
+                ("cartesian_impedance_controller/ft_sensor_wrench", "bus0/ft_sensor0/ft_sensor_readings/wrench"),
+                ("end_effector_controller/target_frame", "target_frame"),
                 ],
             output={
                 'stdout': 'screen',
@@ -126,6 +132,22 @@ def generate_launch_description():
             fake_sensor_commands,
             load_gripper,
             arm_prefix])
+    
+    # Set Force/Torque Collision Behavior for franka1
+    franka1_collision_behavior = ExecuteProcess(
+        cmd=[
+            'ros2',
+            'service',
+            'call',
+            '/service_server/set_force_torque_collision_behavior',
+            'franka_msgs/srv/SetForceTorqueCollisionBehavior',
+            "{lower_torque_thresholds_nominal: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "
+            "upper_torque_thresholds_nominal: [200.0, 200.0, 200.0, 200.0, 200.0, 200.0, 200.0], "
+            "lower_force_thresholds_nominal: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "
+            "upper_force_thresholds_nominal: [200.0, 200.0, 200.0, 200.0, 200.0, 200.0]}"
+        ],
+        output='screen'
+    )
 
     launch_description = LaunchDescription([
         DeclareLaunchArgument(
@@ -155,7 +177,7 @@ def generate_launch_description():
                 use_fake_hardware_parameter_name)),
         DeclareLaunchArgument(
             load_gripper_parameter_name,
-            default_value='true',
+            default_value='false',
             description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
                         'without an end-effector.'),
         Node(
@@ -167,6 +189,7 @@ def generate_launch_description():
                  'rate': 30}],
         ),
         robot_description_dependent_nodes_spawner_opaque_function,
+        franka1_collision_behavior,
         Node(
             package='controller_manager',
             executable='spawner',
@@ -181,13 +204,13 @@ def generate_launch_description():
             output='screen',
             condition=UnlessCondition(use_fake_hardware),
         ),
-        # Node(
-        #     package='controller_manager',
-        #     executable='spawner',
-        #     arguments=['motion_control_handle'],
-        #     output='screen',
-        #     condition=UnlessCondition(use_fake_hardware),
-        # ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['motion_control_handle','--inactive'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
+        ),
         Node(
             package='controller_manager',
             executable='spawner',
@@ -195,13 +218,28 @@ def generate_launch_description():
             output='screen',
             condition=UnlessCondition(use_fake_hardware),
         ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([PathJoinSubstitution(
-                [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py'])]),
-            launch_arguments={robot_ip_parameter_name: robot_ip,
-                              use_fake_hardware_parameter_name: use_fake_hardware}.items(),
-            condition=IfCondition(load_gripper)
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['gravity_compensation','--inactive'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
         ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['end_effector_controller','--inactive'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
+        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource([PathJoinSubstitution(
+        #         [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py'])]),
+        #     launch_arguments={robot_ip_parameter_name: robot_ip,
+        #                       use_fake_hardware_parameter_name: use_fake_hardware,
+        #                       }.items(),
+        #     condition=IfCondition(load_gripper)
+        # ),
         Node(package='rviz2',
              executable='rviz2',
              name='rviz2',
