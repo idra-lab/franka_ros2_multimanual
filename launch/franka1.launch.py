@@ -65,6 +65,16 @@ def robot_description_dependent_nodes_spawner(
                                                'fake_sensor_commands': fake_sensor_commands_str,
                                            }).toprettyxml(indent='  ')
 
+    try:
+        out_dir = os.path.join(get_package_share_directory('idra_franka_launch'), 'generated_urdf')
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, f'{arm_prefix_str}_{arm_id_str}.urdf')
+        with open(out_path, 'w', encoding='utf-8') as f:
+            f.write(robot_description)
+        print(f"Saved generated URDF to: {out_path}")
+    except Exception as e:
+        print(f"Failed to save URDF: {e}")
+
     franka_controllers = PathJoinSubstitution(
         [FindPackageShare('idra_franka_launch'), 'config', 'controllers_ros.yaml'])
 
@@ -90,9 +100,10 @@ def robot_description_dependent_nodes_spawner(
                 ("motion_control_handle/target_frame", "target_frame"),
                 ("cartesian_impedance_controller/target_frame", "target_frame"),
                 ("cartesian_impedance_controller/target_wrench", "target_wrench"),
-                ("end_effector_controller/ft_sensor_wrench", "bus0/ft_sensor0/ft_sensor_readings/wrench"),
                 ("cartesian_impedance_controller/ft_sensor_wrench", "bus0/ft_sensor0/ft_sensor_readings/wrench"),
+                ("end_effector_controller/ft_sensor_wrench", "bus0/ft_sensor0/ft_sensor_readings/wrench"),
                 ("end_effector_controller/target_frame", "target_frame"),
+                ("end_effector_controller/target_wrench", "target_wrench"),
                 ],
             output={
                 'stdout': 'screen',
@@ -144,7 +155,7 @@ def generate_launch_description():
             "{lower_torque_thresholds_nominal: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "
             "upper_torque_thresholds_nominal: [200.0, 200.0, 200.0, 200.0, 200.0, 200.0, 200.0], "
             "lower_force_thresholds_nominal: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "
-            "upper_force_thresholds_nominal: [200.0, 200.0, 200.0, 200.0, 200.0, 200.0]}"
+            "upper_force_thresholds_nominal: [10.0, 10.0, 10.0, 2.0, 2.0, 2.0]}"
         ],
         output='screen'
     )
@@ -189,7 +200,7 @@ def generate_launch_description():
                  'rate': 30}],
         ),
         robot_description_dependent_nodes_spawner_opaque_function,
-        franka1_collision_behavior,
+        # franka1_collision_behavior,
         Node(
             package='controller_manager',
             executable='spawner',
@@ -229,6 +240,13 @@ def generate_launch_description():
             package='controller_manager',
             executable='spawner',
             arguments=['end_effector_controller','--inactive'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['cartesian_impedance_example_controller','--inactive'],
             output='screen',
             condition=UnlessCondition(use_fake_hardware),
         ),

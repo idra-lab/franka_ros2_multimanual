@@ -31,6 +31,9 @@ controller_manager:
 
     gravity_compensation:
       type: gravity_compensation/GravityCompensation
+
+    cartesian_impedance_example_controller:
+      type: franka_example_controllers/CartesianImpedanceExampleController
       
 end_effector_controller:
   ros__parameters:
@@ -69,17 +72,30 @@ cartesian_impedance_controller:
       - velocity
 
     stiffness:
-      trans_x: 1300.0
-      trans_y: 1300.0
-      trans_z: 1300.0
-      rot_x: 70.0
-      rot_y: 70.0
-      rot_z: 70.0
+      trans_x: 1000.0
+      trans_y: 1000.0
+      trans_z: 1000.0
+      rot_x: 60.0
+      rot_y: 60.0
+      rot_z: 40.0
+
+    force_control:
+      # k_p: 1.0
+      # k_d: 0.02
+      # k_i: 1.5
+      k_p: 1.0
+      k_d: 0.0
+      k_i: 3.0
+      
+
+    nullspace_desired_configuration: [0.0122955, 0.252305, -0.0402674, -2.14163, 0.0424824, 1.69748, 0.20905]
+    
+    nullspace_stiffness: 0.0
 
     compensate_gravity: false 
     compensate_coriolis: false 
-    command_current_configuration: false
-    frame_topic_name: "/taget_frame"
+    compensate_dJdq: false
+    frame_topic_name: "/target_frame"
 
 
 
@@ -113,7 +129,13 @@ gravity_compensation:
     state_interfaces:
       - position
       - velocity
-    end_effector_link: "probe"
+    end_effector_link: "arm1_fr3_link8"
     robot_base_link: "arm1_fr3_link0"
-    ft_sensor_ref_link: "probe"
-    compliance_ref_link: "probe"
+    ft_sensor_ref_link: "arm1_fr3_link8"
+    compliance_ref_link: "arm1_fr3_link8"
+
+cartesian_impedance_example_controller:
+  ros__parameters:
+    arm_id: "fr3"
+    joint_prefix: "arm1_fr3"
+
