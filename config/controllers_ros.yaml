@@ -72,25 +72,25 @@ cartesian_impedance_controller:
       - velocity
 
     stiffness:
-      trans_x: 1000.0
-      trans_y: 1000.0
+      trans_x: 1200.0
+      trans_y: 1200.0
       trans_z: 1000.0
-      rot_x: 60.0
-      rot_y: 60.0
+      rot_x: 80.0
+      rot_y: 80.0
       rot_z: 40.0
 
     force_control:
       # k_p: 1.0
       # k_d: 0.02
       # k_i: 1.5
-      k_p: 1.0
-      k_d: 0.0
-      k_i: 3.0
+      k_p: 1.5
+      k_d: 0.02
+      k_i: 2.5
       
 
-    nullspace_desired_configuration: [0.0122955, 0.252305, -0.0402674, -2.14163, 0.0424824, 1.69748, 0.20905]
+    # nullspace_desired_configuration: [0.0122955, 0.252305, -0.0402674, -2.14163, 0.0424824, 1.69748, 0.20905]
     
-    nullspace_stiffness: 0.0
+    # nullspace_stiffness: 5.0
 
     compensate_gravity: false 
     compensate_coriolis: false 
