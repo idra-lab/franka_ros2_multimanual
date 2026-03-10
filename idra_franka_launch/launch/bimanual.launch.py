@@ -22,7 +22,7 @@ from launch_ros.substitutions import FindPackageShare
 
 def robot_gripper_spawner(
     context: LaunchContext,
-    robot_ip, 
+    robot_ip,
     robot_name, # TODO: not sure this is conventional
     use_fake_hardware,
     arm_id = 'fr3'
@@ -51,7 +51,7 @@ def robot_gripper_spawner(
                 {
                     'robot_ip': robot_ip_str,
                     'joint_names': joint_names
-                }, 
+                },
                 gripper_config
             ],
             condition=UnlessCondition(use_fake_hardware),
@@ -97,10 +97,10 @@ def robot_description_dependent_nodes_spawner(
     p = '\t' # Padding
     robot_description = xacro.process_file(
         franka_xacro_filepath,
-        mappings = {      
+        mappings = {
             'hand': load_gripper_str,
-            'ee_id': gripper_type_str, 
-            
+            'ee_id': gripper_type_str,
+
             'gazebo': use_gazebo_str,
             'ros2_control': 'false',
             'with_sc': self_collisions_str,
@@ -124,8 +124,8 @@ def robot_description_dependent_nodes_spawner(
             name='robot_state_publisher',
             output='screen',
             parameters=[{'robot_description': robot_description}],
-        ),        
-        
+        ),
+
         Node(
             package='controller_manager',
             executable='ros2_control_node',
@@ -135,7 +135,7 @@ def robot_description_dependent_nodes_spawner(
             ],
             remappings=[
                 ('~/robot_description', '/robot_description'),
-                ('joint_states', '/joint_states')
+                ('~/joint_states', '/multimanual/joint_states')
             ],
             output='screen',
             condition=UnlessCondition(use_gazebo),
@@ -175,7 +175,7 @@ def generate_launch_description():
 
     rviz_file = os.path.join(get_package_share_directory('idra_franka_launch'), 'rviz', 'bimanual.rviz')
 
-    joint_state_publisher_sources = ["/joint_states", "franka1/franka_gripper/joint_states", "franka2/franka_gripper/joint_states"]
+    joint_state_publisher_sources = ["/multimanual/joint_states", "franka1/franka_gripper/joint_states", "franka2/franka_gripper/joint_states"]
 
     robot_description_dependent_nodes_spawner_opaque_function = OpaqueFunction(
         function=robot_description_dependent_nodes_spawner,
@@ -197,7 +197,7 @@ def generate_launch_description():
         args=[
             left_ip,
             'franka2',
-            use_fake_hardware, 
+            use_fake_hardware,
         ]
     )
 
@@ -206,10 +206,10 @@ def generate_launch_description():
         args=[
             right_ip,
             'franka1',
-            use_fake_hardware, 
+            use_fake_hardware,
         ]
     )
-    
+
     # Gazebo specific configurations
     os.environ['GZ_SIM_RESOURCE_PATH'] = os.path.dirname(get_package_share_directory('franka_description'))
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
@@ -327,7 +327,7 @@ def generate_launch_description():
         ),
 
         robot_description_dependent_nodes_spawner_opaque_function,
-        
+
         # WARN: Gripper works but introduces delays in controls
         robot_gripper_left,
         robot_gripper_right,
@@ -342,6 +342,7 @@ def generate_launch_description():
                 'use_robot_description': False,
             }],
             output='screen',
+            remappings=[("joint_states", "/joint_state_publisher/joint_states"),]
         ),
 
         # Launch Gazebo
