@@ -25,10 +25,16 @@ def robot_gripper_spawner(
     robot_ip, 
     robot_name, # TODO: not sure this is conventional
     use_fake_hardware,
+    load_gripper,
+    use_gazebo,
     arm_id = 'fr3'
 ):
 
     robot_ip_str = context.perform_substitution(robot_ip)
+    load_gripper_str = context.perform_substitution(load_gripper)
+    use_gazebo_str = context.perform_substitution(use_gazebo)
+    if load_gripper_str.lower() == 'false' or use_gazebo_str.lower() == 'true':
+        return []
 
     default_joint_name_postfix = '_finger_joint'
     joint_names_1 = robot_name + '_' + arm_id + default_joint_name_postfix + '1'
@@ -198,6 +204,8 @@ def generate_launch_description():
             left_ip,
             'franka2',
             use_fake_hardware, 
+            load_gripper,
+            use_gazebo,
         ]
     )
 
@@ -207,6 +215,8 @@ def generate_launch_description():
             right_ip,
             'franka1',
             use_fake_hardware, 
+            load_gripper,
+            use_gazebo,
         ]
     )
     

@@ -136,6 +136,7 @@
                       arm_prefix="franka1_"
                       parent=""
                       connected_to=""
+                      tcp_xyz="0 0 0.1050"
                       
                       no_prefix="false"
                       use_fake_hardware="$(arg use_fake_hardware)"
@@ -174,6 +175,7 @@
                       arm_prefix="franka2_"
                       parent=""
                       connected_to=""
+                      tcp_xyz="0 0 0.1050"
                      
                       no_prefix="false"
                       use_fake_hardware="$(arg use_fake_hardware)"
@@ -224,15 +226,15 @@
       </gpio>
     </xacro:macro>
 
-    <xacro:configure_joint joint_name="${robot_name}_fr3_joint1" initial_position="0.0"/>
-    <xacro:configure_joint joint_name="${robot_name}_fr3_joint2" initial_position="${-pi/4}"/>
-    <xacro:configure_joint joint_name="${robot_name}_fr3_joint3" initial_position="0.0"/>
-    <xacro:configure_joint joint_name="${robot_name}_fr3_joint4" initial_position="${-3*pi/4}"/>
-    <xacro:configure_joint joint_name="${robot_name}_fr3_joint5" initial_position="0.0"/>
-    <xacro:configure_joint joint_name="${robot_name}_fr3_joint6" initial_position="${pi/2}"/>
-    <xacro:configure_joint joint_name="${robot_name}_fr3_joint7" initial_position="${pi/4}"/>
+    <xacro:configure_joint joint_name="${robot_name}_fr3_joint1" initial_position="1.0825"/>
+    <xacro:configure_joint joint_name="${robot_name}_fr3_joint2" initial_position="-0.129"/>
+    <xacro:configure_joint joint_name="${robot_name}_fr3_joint3" initial_position="-0.0201"/>
+    <xacro:configure_joint joint_name="${robot_name}_fr3_joint4" initial_position="-2.3393"/>
+    <xacro:configure_joint joint_name="${robot_name}_fr3_joint5" initial_position="-0.0032"/>
+    <xacro:configure_joint joint_name="${robot_name}_fr3_joint6" initial_position="2.2103"/>
+    <xacro:configure_joint joint_name="${robot_name}_fr3_joint7" initial_position="0.279"/>
     <xacro:if value="$(eval gazebo and hand)">
-      <xacro:configure_joint joint_name="${robot_name}_fr3_finger_joint1" initial_position="0.0" />
+      <xacro:configure_joint joint_name="${robot_name}_fr3_finger_joint1" initial_position="0.04" />
     </xacro:if>
 
     <!-- Elbow interfaces -->
@@ -275,7 +277,7 @@
       </xacro:if>
 
       <xacro:if value="$(arg gazebo)">
-        <plugin>franka_ign_ros2_control/IgnitionSystem</plugin>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
       </xacro:if>
 
       <xacro:if value="$(eval not use_fake_hardware and not gazebo)">
@@ -293,7 +295,7 @@
 
   <xacro:if value="$(arg gazebo)">
   <gazebo>
-    <plugin filename="franka_ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>$(arg controller_path)</parameters>
     </plugin>
   </gazebo>
